@@ -13,7 +13,6 @@ defmodule YemmaWeb.UserSessionControllerTest do
       response = html_response(conn, 200)
       assert response =~ "<h1>Log in</h1>"
       assert response =~ "Register</a>"
-      assert response =~ "Forgot your password?</a>"
     end
 
     test "redirects if already logged in", %{conn: conn, user: user} do
@@ -26,7 +25,7 @@ defmodule YemmaWeb.UserSessionControllerTest do
     test "logs the user in", %{conn: conn, user: user} do
       conn =
         post(conn, Routes.user_session_path(conn, :create), %{
-          "user" => %{"email" => user.email, "password" => valid_user_password()}
+          "user" => %{"email" => user.email}
         })
 
       assert get_session(conn, :user_token)
@@ -45,7 +44,6 @@ defmodule YemmaWeb.UserSessionControllerTest do
         post(conn, Routes.user_session_path(conn, :create), %{
           "user" => %{
             "email" => user.email,
-            "password" => valid_user_password(),
             "remember_me" => "true"
           }
         })
@@ -60,23 +58,11 @@ defmodule YemmaWeb.UserSessionControllerTest do
         |> init_test_session(user_return_to: "/foo/bar")
         |> post(Routes.user_session_path(conn, :create), %{
           "user" => %{
-            "email" => user.email,
-            "password" => valid_user_password()
+            "email" => user.email
           }
         })
 
       assert redirected_to(conn) == "/foo/bar"
-    end
-
-    test "emits error message with invalid credentials", %{conn: conn, user: user} do
-      conn =
-        post(conn, Routes.user_session_path(conn, :create), %{
-          "user" => %{"email" => user.email, "password" => "invalid_password"}
-        })
-
-      response = html_response(conn, 200)
-      assert response =~ "<h1>Log in</h1>"
-      assert response =~ "Invalid email or password"
     end
   end
 
