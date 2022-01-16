@@ -71,6 +71,22 @@ defmodule Yemma.UsersTest do
     end
   end
 
+  describe "register_or_get_by_email/1" do
+    test "gets an existing user" do
+      %{email: email} = user_fixture()
+
+      {:ok, user} = Users.register_or_get_by_email(email)
+      assert user.email == email
+    end
+
+    test "registers if email doesn't exist" do
+      email = unique_user_email()
+      {:ok, user} = Users.register_or_get_by_email(email)
+      assert user.email == email
+      assert is_nil(user.confirmed_at)
+    end
+  end
+
   describe "change_user_registration/2" do
     test "returns a changeset" do
       assert %Ecto.Changeset{} = changeset = Users.change_user_registration(%User{})

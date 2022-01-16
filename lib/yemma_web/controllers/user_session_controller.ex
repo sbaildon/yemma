@@ -11,11 +11,13 @@ defmodule YemmaWeb.UserSessionController do
   def create(conn, %{"user" => user_params}) do
     %{"email" => email} = user_params
 
-    if user = Users.get_user_by_email(email) do
-      UserAuth.log_in_user(conn, user, user_params)
-    else
-      # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-      render(conn, "new.html", error_message: "Invalid email")
+    with {:ok, user} <- Users.register_or_get_by_email(email) do
+      Users.deliver_user_confirmation_instructions(
+        user,
+        &Routes.user_confirmation_url(conn, :edit, &1)
+      )
+
+      render(conn, "magic.html", user: user)
     end
   end
 

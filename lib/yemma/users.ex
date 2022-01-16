@@ -62,6 +62,11 @@ defmodule Yemma.Users do
     |> Repo.insert()
   end
 
+  def register_or_get_by_email(email) when is_binary(email) do
+    user = get_user_by_email(email)
+    (user && {:ok, user}) || register_user(%{"email" => email})
+  end
+
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
