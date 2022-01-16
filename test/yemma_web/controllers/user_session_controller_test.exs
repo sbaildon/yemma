@@ -35,6 +35,18 @@ defmodule YemmaWeb.UserSessionControllerTest do
       assert view_template(conn) == "magic.html"
       assert conn.assigns.user.id == user.id
     end
+
+    test "renders log in page if unable to find user for any reason", %{conn: conn} do
+      conn =
+        conn
+        |> post(Routes.user_session_path(conn, :create), %{
+          "user" => %{
+            "email" => "invalid"
+          }
+        })
+
+      assert view_template(conn) == "new.html"
+    end
   end
 
   describe "DELETE /users/log_out" do

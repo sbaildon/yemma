@@ -38,6 +38,26 @@ defmodule Yemma.Users.UserNotifier do
   end
 
   @doc """
+  Deliver instructions to confirm account.
+  """
+  def deliver_magic_link_instructions(user, url) do
+    deliver(user.email, "Magic Link", """
+
+    ==============================
+
+    Hi #{user.email},
+
+    Use your magic link to sign in
+
+    #{url}
+
+    If you didn't create an account with us, please ignore this.
+
+    ==============================
+    """)
+  end
+
+  @doc """
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do

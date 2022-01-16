@@ -213,6 +213,21 @@ defmodule Yemma.Users do
   end
 
   @doc """
+  Delivers magic link email instructions to the given user.
+
+  ## Examples
+
+      iex> deliver_magic_link_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
+      {:ok, %{to: ..., body: ...}}
+  """
+  def deliver_magic_link_instructions(%User{} = user, confirmation_url_fun)
+      when is_function(confirmation_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "magic")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_magic_link_instructions(user, confirmation_url_fun.(encoded_token))
+  end
+
+  @doc """
   Confirms a user by the given token.
 
   If the token matches, the user account is marked as confirmed
