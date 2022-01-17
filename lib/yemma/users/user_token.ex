@@ -6,8 +6,8 @@ defmodule Yemma.Users.UserToken do
   @rand_size 32
 
   @magic_validity {10, "minute"}
-  @change_email_validity_in_days 7
-  @session_validity_in_days 60
+  @change_email_validiity {7, "day"}
+  @session_validity {60, "day"}
 
   schema "users_tokens" do
     field :token, :binary
@@ -51,10 +51,12 @@ defmodule Yemma.Users.UserToken do
   not expired (after @session_validity_in_days).
   """
   def verify_session_token_query(token) do
+    {duration, unit} = validity_for_context("session")
+
     query =
       from token in token_and_context_query(token, "session"),
         join: user in assoc(token, :user),
-        where: token.inserted_at > ago(@session_validity_in_days, "day"),
+        where: token.inserted_at > ago(^duration, ^unit),
         select: user
 
     {:ok, query}
@@ -122,6 +124,8 @@ defmodule Yemma.Users.UserToken do
   end
 
   defp validity_for_context("magic"), do: @magic_validity
+  defp validity_for_context("session"), do: @session_validity
+  defp validity_for_context("change:" <> _), do: @change_email_validiity
 
   @doc """
   Checks if the token is valid and returns its underlying lookup query.
@@ -141,10 +145,11 @@ defmodule Yemma.Users.UserToken do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+        {duration, unit} = validity_for_context(context)
 
         query =
           from token in token_and_context_query(hashed_token, context),
-            where: token.inserted_at > ago(@change_email_validity_in_days, "day")
+            where: token.inserted_at > ago(^duration, ^unit)
 
         {:ok, query}
 
