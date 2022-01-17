@@ -18,6 +18,15 @@ defmodule YemmaWeb.UserSessionControllerTest do
       conn = conn |> log_in_user(user) |> get(Routes.user_session_path(conn, :new))
       assert redirected_to(conn) == "/"
     end
+
+    test "saves return to location if passed as a query param", %{conn: conn} do
+      return_to = "http://example.com"
+      conn = get(conn, Routes.user_session_path(conn, :new, return_to: return_to))
+      assert get_session(conn, :user_return_to) == return_to
+
+      conn = get(conn, Routes.user_session_path(conn, :new))
+      refute get_session(conn, :user_return_to)
+    end
   end
 
   describe "POST /users/log_in" do

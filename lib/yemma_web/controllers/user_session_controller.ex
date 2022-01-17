@@ -4,9 +4,16 @@ defmodule YemmaWeb.UserSessionController do
   alias Yemma.Users
   alias YemmaWeb.UserAuth
 
-  def new(conn, _params) do
-    render(conn, "new.html", error_message: nil)
+  def new(conn, params) do
+    conn
+    |> maybe_store_return_to(params)
+    |> render("new.html", error_message: nil)
   end
+
+  defp maybe_store_return_to(conn, %{"return_to" => return_to}),
+    do: put_session(conn, :user_return_to, return_to)
+
+  defp maybe_store_return_to(conn, _params), do: delete_session(conn, :user_return_to)
 
   def create(conn, %{"user" => user_params}) do
     %{"email" => email} = user_params

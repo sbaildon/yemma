@@ -64,4 +64,16 @@ defmodule YemmaWeb.ConnCase do
     |> Phoenix.ConnTest.init_test_session(%{})
     |> Plug.Conn.put_session(:user_token, token)
   end
+
+  @doc """
+  Removes the query from the redirect location
+  so that it may be compared directly to route helpers
+  """
+  def queryless_redirected_to(conn) do
+    conn
+    |> Phoenix.ConnTest.redirected_to()
+    |> URI.parse()
+    |> Map.replace!(:query, nil)
+    |> URI.to_string()
+  end
 end

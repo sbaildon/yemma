@@ -25,7 +25,7 @@ defmodule YemmaWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user, params \\ %{}) do
+  def log_in_user(conn, user) do
     token = Users.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
 
@@ -33,16 +33,8 @@ defmodule YemmaWeb.UserAuth do
     |> renew_session()
     |> put_session(:user_token, token)
     |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
-    |> maybe_write_remember_me_cookie(token, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
-  end
-
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
-    put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
-  end
-
-  defp maybe_write_remember_me_cookie(conn, _token, _params) do
-    conn
+    |> put_resp_cookie(@remember_me_cookie, token, @remember_me_options)
+    |> redirect(external: user_return_to || signed_in_path(conn))
   end
 
   # This function renews the session ID and erases the whole
@@ -132,19 +124,21 @@ defmodule YemmaWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
+      opts = maybe_forward_return_to(conn)
+
       conn
       |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(external: Routes.user_session_url(Endpoint, :new))
+      |> redirect(external: Routes.user_session_url(Endpoint, :new, opts))
       |> halt()
     end
   end
 
-  defp maybe_store_return_to(%{method: "GET"} = conn) do
-    put_session(conn, :user_return_to, current_path(conn))
+  defp maybe_forward_return_to(%{method: "GET"} = conn) do
+    origin_request = request_url(conn)
+    [return_to: origin_request]
   end
 
-  defp maybe_store_return_to(conn), do: conn
+  defp maybe_forward_return_to(_), do: []
 
   defp signed_in_path(_conn), do: "/"
 end

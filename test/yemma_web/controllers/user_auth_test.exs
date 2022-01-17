@@ -35,8 +35,8 @@ defmodule YemmaWeb.UserAuthTest do
       assert redirected_to(conn) == "/hello"
     end
 
-    test "writes a cookie if remember_me is configured", %{conn: conn, user: user} do
-      conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+    test "writes a cookie", %{conn: conn, user: user} do
+      conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user)
       assert get_session(conn, :user_token) == conn.cookies[@remember_me_cookie]
 
       assert %{value: signed_token, max_age: max_age} = conn.resp_cookies[@remember_me_cookie]
@@ -90,8 +90,7 @@ defmodule YemmaWeb.UserAuthTest do
     end
 
     test "authenticates user from cookies", %{conn: conn, user: user} do
-      logged_in_conn =
-        conn |> fetch_cookies() |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
+      logged_in_conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user)
 
       user_token = logged_in_conn.cookies[@remember_me_cookie]
       %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
@@ -131,34 +130,42 @@ defmodule YemmaWeb.UserAuthTest do
     test "redirects if user is not authenticated", %{conn: conn} do
       conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
       assert conn.halted
-      assert redirected_to(conn) == Routes.user_session_url(YemmaWeb.Endpoint, :new)
+      assert queryless_redirected_to(conn) == Routes.user_session_url(YemmaWeb.Endpoint, :new)
       assert get_flash(conn, :error) == "You must log in to access this page."
     end
 
-    test "stores the path to redirect to on GET", %{conn: conn} do
+    test "forwards the return to destination as a query param", %{conn: conn} do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: ""}
         |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
-      assert halted_conn.halted
-      assert get_session(halted_conn, :user_return_to) == "/foo"
+      return_to_query_param =
+        halted_conn
+        |> Plug.Conn.get_resp_header("location")
+        |> List.first()
+        |> URI.parse()
+        |> Map.fetch!(:query)
+        |> URI.decode_query()
+        |> Map.fetch!("return_to")
 
-      halted_conn =
-        %{conn | path_info: ["foo"], query_string: "bar=baz"}
-        |> fetch_flash()
-        |> UserAuth.require_authenticated_user([])
-
       assert halted_conn.halted
-      assert get_session(halted_conn, :user_return_to) == "/foo?bar=baz"
+      assert return_to_query_param == "http://www.example.com/"
 
       halted_conn =
         %{conn | path_info: ["foo"], query_string: "bar", method: "POST"}
         |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
+      return_to_query_param =
+        halted_conn
+        |> Plug.Conn.get_resp_header("location")
+        |> List.first()
+        |> URI.parse()
+        |> Map.fetch!(:query)
+
       assert halted_conn.halted
-      refute get_session(halted_conn, :user_return_to)
+      refute return_to_query_param
     end
 
     test "does not redirect if user is authenticated", %{conn: conn, user: user} do
