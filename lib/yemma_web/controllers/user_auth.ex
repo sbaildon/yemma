@@ -3,6 +3,7 @@ defmodule YemmaWeb.UserAuth do
   import Phoenix.Controller
 
   alias Yemma.Users
+  alias YemmaWeb.Endpoint
   alias YemmaWeb.Router.Helpers, as: Routes
 
   # Make the remember me cookie valid for 60 days.
@@ -134,7 +135,7 @@ defmodule YemmaWeb.UserAuth do
       conn
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(external: Routes.user_session_url(YemmaWeb.Endpoint, :new))
+      |> redirect(external: Routes.user_session_url(Endpoint, :new))
       |> halt()
     end
   end
