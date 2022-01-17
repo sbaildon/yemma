@@ -17,12 +17,6 @@ defmodule YemmaWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", YemmaWeb do
-    pipe_through :browser
-
-    get "/", PageController, :index
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", YemmaWeb do
   #   pipe_through :api
@@ -41,27 +35,26 @@ defmodule YemmaWeb.Router do
   end
 
   ## Authentication routes
-
   scope "/", YemmaWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
-    get "/users/log_in", UserSessionController, :new
-    post "/users/log_in", UserSessionController, :create
+    get "/", UserSessionController, :new
+    post "/", UserSessionController, :create
   end
 
   scope "/", YemmaWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    get "/users/settings", UserSettingsController, :edit
-    put "/users/settings", UserSettingsController, :update
-    get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
+    get "/settings", UserSettingsController, :edit
+    put "/settings", UserSettingsController, :update
+    get "/settings/confirm_email/:token", UserSettingsController, :confirm_email
   end
 
   scope "/", YemmaWeb do
     pipe_through [:browser]
 
-    delete "/users/log_out", UserSessionController, :delete
-    get "/users/confirm/:token", UserConfirmationController, :edit
-    post "/users/confirm/:token", UserConfirmationController, :update
+    delete "/log_out", UserSessionController, :delete
+    get "/confirm/:token", UserConfirmationController, :edit
+    post "/confirm/:token", UserConfirmationController, :update
   end
 end
