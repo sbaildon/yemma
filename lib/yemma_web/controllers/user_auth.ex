@@ -91,14 +91,25 @@ defmodule YemmaWeb.UserAuth do
     if user_token = get_session(conn, :user_token) do
       {user_token, conn}
     else
-      conn = fetch_cookies(conn, signed: [@remember_me_cookie])
+      conn_with_issuing_key =
+        conn
+        |> set_issuing_secret_key()
+        |> fetch_cookies(signed: [@remember_me_cookie])
 
-      if user_token = conn.cookies[@remember_me_cookie] do
+      if user_token = conn_with_issuing_key.cookies[@remember_me_cookie] do
         {user_token, put_session(conn, :user_token, user_token)}
       else
         {nil, conn}
       end
     end
+  end
+
+  defp set_issuing_secret_key(conn) do
+    secret_key_base =
+      Application.fetch_env!(:yemma, YemmaWeb.Endpoint)
+      |> Keyword.fetch!(:secret_key_base)
+
+    %{conn | secret_key_base: secret_key_base}
   end
 
   @doc """

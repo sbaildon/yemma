@@ -104,6 +104,24 @@ defmodule YemmaWeb.UserAuthTest do
       assert conn.assigns.current_user.id == user.id
     end
 
+    test "authenticates when conn originates from another app", %{
+      conn: conn,
+      user: user
+    } do
+      logged_in_conn = conn |> fetch_cookies() |> UserAuth.log_in_user(user)
+
+      user_token = logged_in_conn.cookies[@remember_me_cookie]
+      %{value: signed_token} = logged_in_conn.resp_cookies[@remember_me_cookie]
+
+      conn =
+        %{conn | secret_key_base: "another_apps_key"}
+        |> put_req_cookie(@remember_me_cookie, signed_token)
+        |> UserAuth.fetch_current_user([])
+
+      assert get_session(conn, :user_token) == user_token
+      assert conn.assigns.current_user.id == user.id
+    end
+
     test "does not authenticate if data is missing", %{conn: conn, user: user} do
       _ = Users.generate_user_session_token(user)
       conn = UserAuth.fetch_current_user(conn, [])
