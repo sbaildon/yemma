@@ -93,7 +93,7 @@ defmodule YemmaWeb.UserAuth do
     else
       conn_with_issuing_key =
         conn
-        |> set_issuing_secret_key()
+        |> maybe_set_issuing_secret_key()
         |> fetch_cookies(signed: [@remember_me_cookie])
 
       if user_token = conn_with_issuing_key.cookies[@remember_me_cookie] do
@@ -104,7 +104,12 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
-  defp set_issuing_secret_key(conn) do
+  defp maybe_set_issuing_secret_key(
+         %Plug.Conn{private: %{phoenix_endpoint: YemmaWeb.Endpoint}} = conn
+       ),
+       do: conn
+
+  defp maybe_set_issuing_secret_key(conn) do
     secret_key_base =
       Application.fetch_env!(:yemma, YemmaWeb.Endpoint)
       |> Keyword.fetch!(:secret_key_base)
