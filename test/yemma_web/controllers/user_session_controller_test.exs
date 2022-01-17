@@ -24,7 +24,6 @@ defmodule YemmaWeb.UserSessionControllerTest do
     test "presents instructions for magic link", %{conn: conn, user: user} do
       conn =
         conn
-        |> init_test_session(user_return_to: "/foo/bar")
         |> post(Routes.user_session_path(conn, :create), %{
           "user" => %{
             "email" => user.email
