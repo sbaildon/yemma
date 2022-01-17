@@ -4,27 +4,6 @@ defmodule YemmaWeb.UserConfirmationController do
   alias Yemma.Users
   alias YemmaWeb.UserAuth
 
-  def new(conn, _params) do
-    render(conn, "new.html")
-  end
-
-  def create(conn, %{"user" => %{"email" => email}}) do
-    if user = Users.get_user_by_email(email) do
-      Users.deliver_user_confirmation_instructions(
-        user,
-        &Routes.user_confirmation_url(conn, :edit, &1)
-      )
-    end
-
-    conn
-    |> put_flash(
-      :info,
-      "If your email is in our system and it has not been confirmed yet, " <>
-        "you will receive an email with instructions shortly."
-    )
-    |> redirect(to: "/")
-  end
-
   def edit(conn, %{"token" => token}) do
     case Users.confirm_user(token) do
       {:ok, user} ->
