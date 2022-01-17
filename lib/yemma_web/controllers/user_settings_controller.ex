@@ -2,7 +2,6 @@ defmodule YemmaWeb.UserSettingsController do
   use YemmaWeb, :controller
 
   alias Yemma.Users
-  alias YemmaWeb.UserAuth
 
   plug :assign_email_changesets
 
