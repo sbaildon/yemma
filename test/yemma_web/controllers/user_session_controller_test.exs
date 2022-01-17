@@ -16,7 +16,7 @@ defmodule YemmaWeb.UserSessionControllerTest do
 
     test "redirects if already logged in", %{conn: conn, user: user} do
       conn = conn |> log_in_user(user) |> get(Routes.user_session_path(conn, :new))
-      assert redirected_to(conn) == "/"
+      assert redirected_to(conn) == Routes.user_settings_url(YemmaWeb.Endpoint, :edit)
     end
 
     test "saves return to location if passed as a query param", %{conn: conn} do

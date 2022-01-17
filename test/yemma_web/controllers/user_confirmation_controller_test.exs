@@ -24,7 +24,7 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
         end)
 
       conn = get(conn, Routes.user_confirmation_path(conn, :edit, token))
-      assert redirected_to(conn) == "/"
+      assert redirected_to(conn) == Routes.user_settings_url(@endpoint, :edit)
       assert Users.get_user!(user.id).confirmed_at
       assert get_session(conn, :user_token)
       assert [%{context: "session", user_id: ^user_id} | []] = Repo.all(Users.UserToken)

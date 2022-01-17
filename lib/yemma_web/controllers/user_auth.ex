@@ -34,7 +34,7 @@ defmodule YemmaWeb.UserAuth do
     |> put_session(:user_token, token)
     |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
     |> put_resp_cookie(@remember_me_cookie, token, @remember_me_options)
-    |> redirect(external: user_return_to || signed_in_path(conn))
+    |> redirect(external: user_return_to || signed_in_path())
   end
 
   # This function renews the session ID and erases the whole
@@ -120,10 +120,21 @@ defmodule YemmaWeb.UserAuth do
   @doc """
   Used for routes that require the user to not be authenticated.
   """
-  def redirect_if_user_is_authenticated(conn, _opts) do
+  def redirect_if_user_is_authenticated(conn, opts) do
     if conn.assigns[:current_user] do
+      to = Keyword.get(opts, :to, nil)
+
+      redirect_to =
+        case to do
+          {m, f, a} ->
+            apply(m, f, a)
+
+          nil ->
+            signed_in_path()
+        end
+
       conn
-      |> redirect(to: signed_in_path(conn))
+      |> redirect(external: redirect_to)
       |> halt()
     else
       conn
@@ -156,5 +167,5 @@ defmodule YemmaWeb.UserAuth do
 
   defp maybe_forward_return_to(_), do: []
 
-  defp signed_in_path(_conn), do: "/"
+  defp signed_in_path(), do: Routes.user_settings_url(Endpoint, :edit)
 end
