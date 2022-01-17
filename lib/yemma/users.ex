@@ -234,18 +234,18 @@ defmodule Yemma.Users do
   and the token is deleted.
   """
   def confirm_user(token) do
-    with {:ok, query} <- UserToken.verify_email_token_query(token, "confirm"),
-         %User{} = user <- Repo.one(query),
-         {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user)) do
+    with {:ok, query} <- UserToken.verify_email_token_query(token, "magic"),
+         %UserToken{user: %{id: _}} = user_token <- Repo.one(query),
+         {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user_token.user, user_token)) do
       {:ok, user}
     else
       _ -> :error
     end
   end
 
-  defp confirm_user_multi(user) do
+  defp confirm_user_multi(user, token) do
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, User.confirm_changeset(user))
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, ["confirm"]))
+    |> Ecto.Multi.delete(:token, token)
   end
 end

@@ -312,7 +312,7 @@ defmodule Yemma.UsersTest do
 
       token =
         extract_user_token(fn url ->
-          Users.deliver_user_confirmation_instructions(user, url)
+          Users.deliver_magic_link_instructions(user, url)
         end)
 
       %{user: user, token: token}
