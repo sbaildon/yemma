@@ -33,9 +33,15 @@ defmodule YemmaWeb.UserAuth do
     |> renew_session()
     |> put_session(:user_token, token)
     |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
-    |> put_resp_cookie(@remember_me_cookie, token, @remember_me_options)
+    |> put_resp_cookie(
+      @remember_me_cookie,
+      token,
+      @remember_me_options ++ [domain: cookie_domain()]
+    )
     |> redirect(external: user_return_to || signed_in_path())
   end
+
+  defp cookie_domain(), do: Application.get_env(:yemma, :cookie_domain) || Endpoint.host()
 
   # This function renews the session ID and erases the whole
   # session to avoid fixation attacks. If there is any data
