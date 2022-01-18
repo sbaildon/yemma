@@ -154,7 +154,6 @@ defmodule YemmaWeb.UserAuth do
       opts = maybe_forward_return_to(conn)
 
       conn
-      |> put_flash(:error, "You must log in to access this page.")
       |> redirect(external: Routes.user_session_url(Endpoint, :new, opts))
       |> halt()
     end

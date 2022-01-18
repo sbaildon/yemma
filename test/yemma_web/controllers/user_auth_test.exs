@@ -178,7 +178,6 @@ defmodule YemmaWeb.UserAuthTest do
       conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
       assert conn.halted
       assert queryless_redirected_to(conn) == Routes.user_session_url(YemmaWeb.Endpoint, :new)
-      assert get_flash(conn, :error) == "You must log in to access this page."
     end
 
     test "forwards the return to destination as a query param", %{conn: conn} do
