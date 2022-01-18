@@ -8,9 +8,6 @@ defmodule Yemma.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
-      Yemma.Repo,
-      # Start the Telemetry supervisor
       YemmaWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Yemma.PubSub},

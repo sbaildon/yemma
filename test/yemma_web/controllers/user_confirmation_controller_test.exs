@@ -2,7 +2,7 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
   use YemmaWeb.ConnCase
 
   alias Yemma.Users
-  alias Yemma.Repo
+  alias Yemma.Test.Repo
   import Yemma.UsersFixtures
 
   setup do

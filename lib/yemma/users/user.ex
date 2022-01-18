@@ -2,6 +2,8 @@ defmodule Yemma.Users.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  defp repo(), do: Application.fetch_env!(:yemma, :repo)
+
   schema "users" do
     field :email, :string
     field :confirmed_at, :naive_datetime
@@ -28,7 +30,7 @@ defmodule Yemma.Users.User do
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
     |> validate_length(:email, max: 160)
-    |> unsafe_validate_unique(:email, Yemma.Repo)
+    |> unsafe_validate_unique(:email, repo())
     |> unique_constraint(:email)
   end
 

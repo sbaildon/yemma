@@ -8,7 +8,7 @@
 import Config
 
 config :yemma,
-  ecto_repos: [Yemma.Repo]
+  ecto_repos: [Yemma.Test.Repo]
 
 # Configures the endpoint
 config :yemma, YemmaWeb.Endpoint,

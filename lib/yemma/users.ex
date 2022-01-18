@@ -4,7 +4,8 @@ defmodule Yemma.Users do
   """
 
   import Ecto.Query, warn: false
-  alias Yemma.Repo
+
+  defp repo(), do: Application.fetch_env!(:yemma, :repo)
 
   alias Yemma.Users.{User, UserToken, UserNotifier}
 
@@ -23,7 +24,7 @@ defmodule Yemma.Users do
 
   """
   def get_user_by_email(email) when is_binary(email) do
-    Repo.get_by(User, email: email)
+    repo().get_by(User, email: email)
   end
 
   @doc """
@@ -40,7 +41,7 @@ defmodule Yemma.Users do
       ** (Ecto.NoResultsError)
 
   """
-  def get_user!(id), do: Repo.get!(User, id)
+  def get_user!(id), do: repo().get!(User, id)
 
   ## User registration
 
@@ -59,7 +60,7 @@ defmodule Yemma.Users do
   def register_user(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
-    |> Repo.insert()
+    |> repo().insert()
   end
 
   def register_or_get_by_email(email) when is_binary(email) do
@@ -124,8 +125,8 @@ defmodule Yemma.Users do
     context = "change:#{user.email}"
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
-         %UserToken{sent_to: email} <- Repo.one(query),
-         {:ok, _} <- Repo.transaction(user_email_multi(user, email, context)) do
+         %UserToken{sent_to: email} <- repo().one(query),
+         {:ok, _} <- repo().transaction(user_email_multi(user, email, context)) do
       :ok
     else
       _ -> :error
@@ -156,7 +157,7 @@ defmodule Yemma.Users do
       when is_function(update_email_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
 
-    Repo.insert!(user_token)
+    repo().insert!(user_token)
     UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))
   end
 
@@ -167,7 +168,7 @@ defmodule Yemma.Users do
   """
   def generate_user_session_token(user) do
     {token, user_token} = UserToken.build_session_token(user)
-    Repo.insert!(user_token)
+    repo().insert!(user_token)
     token
   end
 
@@ -176,14 +177,14 @@ defmodule Yemma.Users do
   """
   def get_user_by_session_token(token) do
     {:ok, query} = UserToken.verify_session_token_query(token)
-    Repo.one(query)
+    repo().one(query)
   end
 
   @doc """
   Deletes the signed token with the given context.
   """
   def delete_session_token(token) do
-    Repo.delete_all(UserToken.token_and_context_query(token, "session"))
+    repo().delete_all(UserToken.token_and_context_query(token, "session"))
     :ok
   end
 
@@ -207,7 +208,7 @@ defmodule Yemma.Users do
       {:error, :already_confirmed}
     else
       {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
-      Repo.insert!(user_token)
+      repo().insert!(user_token)
       UserNotifier.deliver_confirmation_instructions(user, confirmation_url_fun.(encoded_token))
     end
   end
@@ -223,7 +224,7 @@ defmodule Yemma.Users do
   def deliver_magic_link_instructions(%User{} = user, confirmation_url_fun)
       when is_function(confirmation_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "magic")
-    Repo.insert!(user_token)
+    repo().insert!(user_token)
     UserNotifier.deliver_magic_link_instructions(user, confirmation_url_fun.(encoded_token))
   end
 
@@ -235,8 +236,9 @@ defmodule Yemma.Users do
   """
   def confirm_user(token) do
     with {:ok, query} <- UserToken.verify_email_token_query(token, "magic"),
-         %UserToken{user: %{id: _}} = user_token <- Repo.one(query),
-         {:ok, %{user: user}} <- Repo.transaction(confirm_user_multi(user_token.user, user_token)) do
+         %UserToken{user: %{id: _}} = user_token <- repo().one(query),
+         {:ok, %{user: user}} <-
+           repo().transaction(confirm_user_multi(user_token.user, user_token)) do
       {:ok, user}
     else
       _ -> :error
