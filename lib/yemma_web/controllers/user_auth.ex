@@ -104,18 +104,11 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
-  defp maybe_set_issuing_secret_key(
-         %Plug.Conn{private: %{phoenix_endpoint: YemmaWeb.Endpoint}} = conn
-       ),
-       do: conn
+  defp maybe_set_issuing_secret_key(%{private: %{phoenix_endpoint: YemmaWeb.Endpoint}} = conn),
+    do: conn
 
-  defp maybe_set_issuing_secret_key(conn) do
-    secret_key_base =
-      Application.fetch_env!(:yemma, YemmaWeb.Endpoint)
-      |> Keyword.fetch!(:secret_key_base)
-
-    %{conn | secret_key_base: secret_key_base}
-  end
+  defp maybe_set_issuing_secret_key(conn),
+    do: Map.replace!(conn, :secret_key_base, YemmaWeb.Endpoint.config(:secret_key_base))
 
   @doc """
   Used for routes that require the user to not be authenticated.
