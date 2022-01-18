@@ -115,22 +115,23 @@ defmodule YemmaWeb.UserAuth do
   """
   def redirect_if_user_is_authenticated(conn, opts) do
     if conn.assigns[:current_user] do
-      to = Keyword.get(opts, :to, nil)
-
-      redirect_to =
-        case to do
-          {m, f, a} ->
-            apply(m, f, a)
-
-          nil ->
-            signed_in_path()
-        end
+      redirect_to = parse_redirect_to(opts)
 
       conn
       |> redirect(external: redirect_to)
       |> halt()
     else
       conn
+    end
+  end
+
+  defp parse_redirect_to(opts) do
+    case opts[:to] do
+      nil ->
+        signed_in_path()
+
+      {m, f, a} ->
+        apply(m, f, a)
     end
   end
 
