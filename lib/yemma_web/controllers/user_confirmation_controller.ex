@@ -8,7 +8,6 @@ defmodule YemmaWeb.UserConfirmationController do
     case Users.confirm_user(token) do
       {:ok, user} ->
         conn
-        |> put_flash(:info, "Session confirmed successfully")
         |> UserAuth.log_in_user(user)
 
       :error ->
