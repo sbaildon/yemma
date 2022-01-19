@@ -1,10 +1,8 @@
 import Config
 
-# Configure your database
-#
-# The MIX_TEST_PARTITION environment variable can be used
-# to provide built-in test partitioning in CI environment.
-# Run `mix help test` for more information.
+config :yemma,
+  ecto_repos: [Yemma.Test.Repo]
+
 config :yemma, Yemma.Test.Repo,
   priv: "test/support/",
   database: Path.expand("../yemma_test.db", Path.dirname(__ENV__.file)),
@@ -19,8 +17,9 @@ config :yemma,
 # In test we don't send emails.
 config :yemma, Yemma.Mailer, adapter: Swoosh.Adapters.Test
 
-# Print only warnings and errors during test
-config :logger, level: :warn
-
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :swoosh, :api_client, false
+
+config :logger, :console, format: "$time $metadata[$level] $message\n", level: :warn
