@@ -79,6 +79,8 @@ defmodule YemmaWeb.UserAuthTest do
       assert signed_token != get_session(conn, :user_token)
       assert max_age == 5_184_000
       assert domain == cookie_domain
+
+      Application.delete_env(:yemma, :cookie_domain)
     end
 
     test "again", %{conn: conn, user: user} do
