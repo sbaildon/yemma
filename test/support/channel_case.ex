@@ -24,7 +24,7 @@ defmodule YemmaWeb.ChannelCase do
       import YemmaWeb.ChannelCase
 
       # The default endpoint for testing
-      @endpoint YemmaWeb.Endpoint
+      @endpoint Phoenix.YemmaWeb.Endpoint
     end
   end
 

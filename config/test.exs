@@ -10,14 +10,10 @@ config :yemma, Yemma.Test.Repo,
   pool_size: 5,
   pool: Ecto.Adapters.SQL.Sandbox
 
-config :yemma, repo: Yemma.Test.Repo
-
-# We don't run a server during test. If one is required,
-# you can enable the server option below.
-config :yemma, YemmaWeb.Endpoint,
-  http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "KGZHtZ5nYiaNleW9fCWoCjnAfRHY7gTl7S2+pzLKIN0paXk0Syv3826nJqdR/uiD",
-  server: false
+config :yemma,
+  repo: Yemma.Test.Repo,
+  pubsub_server: Phoenix.YemmaTest.PubSub,
+  secret_key_base: "KGZHtZ5nYiaNleW9fCWoCjnAfRHY7gTl7S2+pzLKIN0paXk0Syv3826nJqdR/uiD"
 
 # In test we don't send emails.
 config :yemma, Yemma.Mailer, adapter: Swoosh.Adapters.Test

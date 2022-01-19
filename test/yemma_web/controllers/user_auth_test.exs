@@ -10,7 +10,7 @@ defmodule YemmaWeb.UserAuthTest do
   setup %{conn: conn} do
     conn =
       conn
-      |> Map.replace!(:secret_key_base, YemmaWeb.Endpoint.config(:secret_key_base))
+      |> Map.replace!(:secret_key_base, Phoenix.YemmaTest.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
     %{user: user_fixture(), conn: conn}
@@ -21,7 +21,7 @@ defmodule YemmaWeb.UserAuthTest do
       conn = UserAuth.log_in_user(conn, user)
       assert token = get_session(conn, :user_token)
       assert get_session(conn, :live_socket_id) == "users_sessions:#{Base.url_encode64(token)}"
-      assert redirected_to(conn) == Routes.user_settings_url(@endpoint, :edit)
+      assert redirected_to(conn) == "/"
       assert Users.get_user_by_session_token(token)
     end
 
@@ -30,9 +30,25 @@ defmodule YemmaWeb.UserAuthTest do
       refute get_session(conn, :to_be_removed)
     end
 
-    test "redirects to the configured path", %{conn: conn, user: user} do
+    test "redirects to the origin url", %{conn: conn, user: user} do
       conn = conn |> put_session(:user_return_to, "/hello") |> UserAuth.log_in_user(user)
       assert redirected_to(conn) == "/hello"
+    end
+
+    test "redirects to the configured url", %{conn: conn, user: user} do
+      {m, f, a} =
+        {Phoenix.YemmaTest.Router.Helpers, :page_url, [Phoenix.YemmaTest.Endpoint, :index]}
+
+      Application.put_env(
+        :yemma,
+        :signed_in_path,
+        {m, f, a}
+      )
+
+      conn = UserAuth.log_in_user(conn, user)
+      assert redirected_to(conn) == apply(m, f, a)
+
+      Application.delete_env(:yemma, :signed_in_path)
     end
 
     test "writes a cookie", %{conn: conn, user: user} do
@@ -44,7 +60,25 @@ defmodule YemmaWeb.UserAuthTest do
 
       assert signed_token != get_session(conn, :user_token)
       assert max_age == 5_184_000
-      assert domain == "localhost"
+      assert domain == conn.host
+    end
+
+    test "writes a cookie to a custom domain", %{conn: conn, user: user} do
+      auth_host = Regex.replace(~r/www/, conn.host, "auth")
+      cookie_domain = Regex.replace(~r/auth/, auth_host, "")
+      Application.put_env(:yemma, :cookie_domain, cookie_domain)
+
+      conn =
+        conn |> fetch_cookies() |> UserAuth.log_in_user(user) |> Map.replace!(:host, auth_host)
+
+      assert get_session(conn, :user_token) == conn.cookies[@remember_me_cookie]
+
+      assert %{value: signed_token, max_age: max_age, domain: domain} =
+               conn.resp_cookies[@remember_me_cookie]
+
+      assert signed_token != get_session(conn, :user_token)
+      assert max_age == 5_184_000
+      assert domain == cookie_domain
     end
 
     test "again", %{conn: conn, user: user} do
@@ -82,7 +116,7 @@ defmodule YemmaWeb.UserAuthTest do
 
     test "broadcasts to the given live_socket_id", %{conn: conn} do
       live_socket_id = "users_sessions:abcdef-token"
-      YemmaWeb.Endpoint.subscribe(live_socket_id)
+      Phoenix.YemmaTest.Endpoint.subscribe(live_socket_id)
 
       conn
       |> put_session(:live_socket_id, live_socket_id)
@@ -151,7 +185,24 @@ defmodule YemmaWeb.UserAuthTest do
     test "redirects if user is authenticated", %{conn: conn, user: user} do
       conn = conn |> assign(:current_user, user) |> UserAuth.redirect_if_user_is_authenticated([])
       assert conn.halted
-      assert redirected_to(conn) == Routes.user_settings_url(@endpoint, :edit)
+      assert redirected_to(conn) == "/"
+    end
+
+    test "redirects to configured path", %{conn: conn, user: user} do
+      {m, f, a} =
+        {Phoenix.YemmaTest.Router.Helpers, :page_url, [Phoenix.YemmaTest.Endpoint, :index]}
+
+      Application.put_env(
+        :yemma,
+        :signed_in_path,
+        {m, f, a}
+      )
+
+      conn = conn |> assign(:current_user, user) |> UserAuth.redirect_if_user_is_authenticated([])
+      assert conn.halted
+      assert redirected_to(conn) == apply(m, f, a)
+
+      Application.delete_env(:yemma, :signed_in_path)
     end
 
     test "redirects to the provided mfa result", %{conn: conn, user: user} do
@@ -177,7 +228,7 @@ defmodule YemmaWeb.UserAuthTest do
     test "redirects if user is not authenticated", %{conn: conn} do
       conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
       assert conn.halted
-      assert queryless_redirected_to(conn) == Routes.user_session_url(YemmaWeb.Endpoint, :new)
+      assert queryless_redirected_to(conn) == Routes.user_session_path(conn, :new)
     end
 
     test "forwards the return to destination as a query param", %{conn: conn} do

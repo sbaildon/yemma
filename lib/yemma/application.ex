@@ -7,15 +7,7 @@ defmodule Yemma.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      YemmaWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: Yemma.PubSub},
-      # Start the Endpoint (http/https)
-      YemmaWeb.Endpoint
-      # Start a worker by calling: Yemma.Worker.start_link(arg)
-      # {Yemma.Worker, arg}
-    ]
+    children = []
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

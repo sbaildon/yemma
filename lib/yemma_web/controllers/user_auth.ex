@@ -3,8 +3,6 @@ defmodule YemmaWeb.UserAuth do
   import Phoenix.Controller
 
   alias Yemma.Users
-  alias YemmaWeb.Endpoint
-  alias YemmaWeb.Router.Helpers, as: Routes
 
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
@@ -77,7 +75,13 @@ defmodule YemmaWeb.UserAuth do
     user_token && Users.delete_session_token(user_token)
 
     if live_socket_id = get_session(conn, :live_socket_id) do
-      YemmaWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
+      pubsub = Application.get_env(:yemma, :pubsub_server)
+
+      pubsub &&
+        Phoenix.PubSub.broadcast(pubsub, live_socket_id, %Phoenix.Socket.Broadcast{
+          event: "disconnect",
+          topic: live_socket_id
+        })
     end
 
     conn
@@ -159,20 +163,29 @@ defmodule YemmaWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
-      opts = maybe_forward_return_to(conn)
+      query = maybe_forward_return_to(conn)
 
       conn
-      |> redirect(external: Routes.user_session_url(Endpoint, :new, opts))
+      |> redirect(external: "/sign_in#{query}")
       |> halt()
     end
   end
 
   defp maybe_forward_return_to(%{method: "GET"} = conn) do
-    origin_request = request_url(conn)
-    [return_to: origin_request]
+    %{return_to: request_url(conn)}
+    |> URI.encode_query()
+    |> then(&"?#{&1}")
   end
 
   defp maybe_forward_return_to(_), do: []
 
-  defp signed_in_path(), do: Routes.user_settings_url(Endpoint, :edit)
+  defp signed_in_path() do
+    case Application.get_env(:yemma, :signed_in_path) do
+      {m, f, a} ->
+        apply(m, f, a)
+
+      nil ->
+        "/"
+    end
+  end
 end
