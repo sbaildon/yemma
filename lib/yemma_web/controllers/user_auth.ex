@@ -33,15 +33,18 @@ defmodule YemmaWeb.UserAuth do
     |> renew_session()
     |> put_session(:user_token, token)
     |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
-    |> put_resp_cookie(
-      @remember_me_cookie,
-      token,
-      @remember_me_options ++ [domain: cookie_domain()]
-    )
+    |> with_issuing_secret_key(fn conn ->
+      put_resp_cookie(
+        conn,
+        @remember_me_cookie,
+        token,
+        @remember_me_options ++ [domain: cookie_domain(conn)]
+      )
+    end)
     |> redirect(external: user_return_to || signed_in_path())
   end
 
-  defp cookie_domain(), do: Application.get_env(:yemma, :cookie_domain) || Endpoint.host()
+  defp cookie_domain(conn), do: Application.get_env(:yemma, :cookie_domain) || conn.host()
 
   # This function renews the session ID and erases the whole
   # session to avoid fixation attacks. If there is any data
@@ -97,12 +100,13 @@ defmodule YemmaWeb.UserAuth do
     if user_token = get_session(conn, :user_token) do
       {user_token, conn}
     else
-      conn_with_issuing_key =
+      conn =
         conn
-        |> maybe_set_issuing_secret_key()
-        |> fetch_cookies(signed: [@remember_me_cookie])
+        |> with_issuing_secret_key(fn conn ->
+          fetch_cookies(conn, signed: [@remember_me_cookie])
+        end)
 
-      if user_token = conn_with_issuing_key.cookies[@remember_me_cookie] do
+      if user_token = conn.cookies[@remember_me_cookie] do
         {user_token, put_session(conn, :user_token, user_token)}
       else
         {nil, conn}
@@ -110,11 +114,15 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
-  defp maybe_set_issuing_secret_key(%{private: %{phoenix_endpoint: YemmaWeb.Endpoint}} = conn),
-    do: conn
+  defp with_issuing_secret_key(conn, function) when is_function(function, 1) do
+    issuing_secret_key = Application.fetch_env!(:yemma, :secret_key_base)
+    original_secret_key = Map.fetch!(conn, :secret_key_base)
 
-  defp maybe_set_issuing_secret_key(conn),
-    do: Map.replace!(conn, :secret_key_base, YemmaWeb.Endpoint.config(:secret_key_base))
+    conn
+    |> Map.replace!(:secret_key_base, issuing_secret_key)
+    |> function.()
+    |> Map.replace!(:secret_key_base, original_secret_key)
+  end
 
   @doc """
   Used for routes that require the user to not be authenticated.
