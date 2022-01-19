@@ -1,6 +1,3 @@
-Yemma.Test.Repo.start_link()
-Ecto.Adapters.SQL.Sandbox.mode(Yemma.Test.Repo, :manual)
-
 Application.put_env(:yemma, Phoenix.YemmaTest.Endpoint,
   url: [host: "localhost", port: 4001],
   secret_key_base: "LQLOmWs21foxaxwrEH+7lmarzFHYaAULHBl5pzdoFeZtEo/+wN0SAH0XAdkxz9i0",
@@ -9,6 +6,9 @@ Application.put_env(:yemma, Phoenix.YemmaTest.Endpoint,
   check_origin: false,
   pubsub_server: Phoenix.YemmaTest.PubSub
 )
+
+YemmaTest.Repo.start_link()
+Ecto.Adapters.SQL.Sandbox.mode(YemmaTest.Repo, :manual)
 
 defmodule Phoenix.YemmaTest.ErrorView do
   use Phoenix.View, root: "test/templates"
