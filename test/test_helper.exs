@@ -75,7 +75,6 @@ defmodule Phoenix.YemmaTest.Router do
 
     delete "/log_out", UserSessionController, :delete
     get "/confirm/:token", UserConfirmationController, :edit
-    post "/confirm/:token", UserConfirmationController, :update
   end
 end
 
