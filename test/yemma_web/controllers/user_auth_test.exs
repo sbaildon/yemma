@@ -252,7 +252,9 @@ defmodule YemmaWeb.UserAuthTest do
 
       assert halted_conn.halted
       assert return_to_query_param == "http://www.example.com/"
+    end
 
+    test "does not forward return to destination if POST", %{conn: conn} do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: "bar", method: "POST"}
         |> UserAuth.require_authenticated_user([])
