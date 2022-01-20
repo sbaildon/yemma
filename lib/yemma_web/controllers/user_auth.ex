@@ -163,21 +163,35 @@ defmodule YemmaWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
-      query = maybe_forward_return_to(conn)
+      redirect_to =
+        routes().user_session_url(conn, :new)
+        |> URI.parse()
+        |> Map.update!(:query, fn
+          nil ->
+            maybe_forward_return_to(conn)
+            |> case do
+              map when map == %{} -> nil
+              map -> URI.encode_query(map, :rfc3986)
+            end
+
+          existing_query ->
+            URI.decode_query(existing_query, %{}, :rfc3986)
+            |> Map.merge(maybe_forward_return_to(conn))
+            |> URI.encode_query(:rfc3986)
+        end)
+        |> URI.to_string()
 
       conn
-      |> redirect(external: "/sign_in#{query}")
+      |> redirect(external: redirect_to)
       |> halt()
     end
   end
 
   defp maybe_forward_return_to(%{method: "GET"} = conn) do
-    %{return_to: request_url(conn)}
-    |> URI.encode_query()
-    |> then(&"?#{&1}")
+    %{"return_to" => request_url(conn)}
   end
 
-  defp maybe_forward_return_to(_), do: []
+  defp maybe_forward_return_to(_), do: %{}
 
   defp signed_in_path() do
     case Application.get_env(:yemma, :signed_in_path) do
@@ -187,5 +201,10 @@ defmodule YemmaWeb.UserAuth do
       nil ->
         "/"
     end
+  end
+
+  defp routes() do
+    Yemma.config()
+    |> Map.fetch!(:routes)
   end
 end

@@ -16,7 +16,7 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     test "redirects if user is not logged in" do
       conn = build_conn()
       conn = get(conn, Routes.user_settings_path(conn, :edit))
-      assert queryless_redirected_to(conn) == Routes.user_session_path(conn, :new)
+      assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)
     end
   end
 
@@ -81,7 +81,7 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     test "redirects if user is not logged in", %{token: token} do
       conn = build_conn()
       conn = get(conn, Routes.user_settings_path(conn, :confirm_email, token))
-      assert queryless_redirected_to(conn) == Routes.user_session_path(conn, :new)
+      assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)
     end
   end
 end

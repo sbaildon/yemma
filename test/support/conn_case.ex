@@ -30,6 +30,8 @@ defmodule YemmaWeb.ConnCase do
 
       # The default endpoint for testing
       @endpoint Phoenix.YemmaTest.Endpoint
+
+      def put_endpoint(conn), do: put_private(conn, :phoenix_endpoint, @endpoint)
     end
   end
 

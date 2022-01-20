@@ -10,7 +10,6 @@ defmodule YemmaWeb.UserAuthTest do
   setup %{conn: conn} do
     conn =
       conn
-      |> Map.replace!(:secret_key_base, Phoenix.YemmaTest.Endpoint.config(:secret_key_base))
       |> init_test_session(%{})
 
     %{user: user_fixture(), conn: conn}
@@ -227,16 +226,19 @@ defmodule YemmaWeb.UserAuthTest do
   end
 
   describe "require_authenticated_user/2" do
+    setup %{conn: conn} = context do
+      %{context | conn: put_endpoint(conn)}
+    end
+
     test "redirects if user is not authenticated", %{conn: conn} do
-      conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
+      conn = conn |> UserAuth.require_authenticated_user([])
       assert conn.halted
-      assert queryless_redirected_to(conn) == Routes.user_session_path(conn, :new)
+      assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)
     end
 
     test "forwards the return to destination as a query param", %{conn: conn} do
       halted_conn =
         %{conn | path_info: ["foo"], query_string: ""}
-        |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
       return_to_query_param =
@@ -253,7 +255,6 @@ defmodule YemmaWeb.UserAuthTest do
 
       halted_conn =
         %{conn | path_info: ["foo"], query_string: "bar", method: "POST"}
-        |> fetch_flash()
         |> UserAuth.require_authenticated_user([])
 
       return_to_query_param =
