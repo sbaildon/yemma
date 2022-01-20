@@ -18,7 +18,7 @@ defmodule YemmaWeb.UserSettingsController do
         Users.deliver_update_email_instructions(
           applied_user,
           user.email,
-          &Routes.user_settings_url(conn, :confirm_email, &1)
+          &routes().user_settings_url(conn, :confirm_email, &1)
         )
 
         conn
@@ -26,7 +26,7 @@ defmodule YemmaWeb.UserSettingsController do
           :info,
           "A link to confirm your email change has been sent to the new address."
         )
-        |> redirect(to: Routes.user_settings_path(conn, :edit))
+        |> redirect(to: routes().user_settings_path(conn, :edit))
 
       {:error, changeset} ->
         render(conn, "edit.html", email_changeset: changeset)
@@ -38,12 +38,12 @@ defmodule YemmaWeb.UserSettingsController do
       :ok ->
         conn
         |> put_flash(:info, "Email changed successfully.")
-        |> redirect(to: Routes.user_settings_path(conn, :edit))
+        |> redirect(to: routes().user_settings_path(conn, :edit))
 
       :error ->
         conn
         |> put_flash(:error, "Email change link is invalid or it has expired.")
-        |> redirect(to: Routes.user_settings_path(conn, :edit))
+        |> redirect(to: routes().user_settings_path(conn, :edit))
     end
   end
 

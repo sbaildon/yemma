@@ -79,10 +79,11 @@ defmodule Phoenix.YemmaTest.Router do
   end
 end
 
-Application.put_env(:yemma, :routes, Phoenix.YemmaTest.Router.Helpers)
+Application.put_env(:yemma_test, Yemma, routes: Phoenix.YemmaTest.Router.Helpers)
 
 Supervisor.start_link(
   [
+    {Yemma, Application.fetch_env!(:yemma_test, Yemma)},
     {Phoenix.PubSub, name: Phoenix.YemmaTest.PubSub, adapter: Phoenix.PubSub.PG2},
     Phoenix.YemmaTest.Endpoint
   ],

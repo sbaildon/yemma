@@ -23,7 +23,7 @@ defmodule YemmaWeb do
 
       import Plug.Conn
       import YemmaWeb.Gettext
-      alias YemmaWeb.Router.Helpers, as: Routes
+      unquote(route_helper())
     end
   end
 
@@ -36,6 +36,8 @@ defmodule YemmaWeb do
       # Import convenience functions from controllers
       import Phoenix.Controller,
         only: [get_flash: 1, get_flash: 2, view_module: 1, view_template: 1]
+
+      unquote(route_helper())
 
       # Include shared imports and aliases for views
       unquote(view_helpers())
@@ -97,7 +99,16 @@ defmodule YemmaWeb do
 
       import YemmaWeb.ErrorHelpers
       import YemmaWeb.Gettext
-      alias YemmaWeb.Router.Helpers, as: Routes
+      unquote(route_helper())
+    end
+  end
+
+  def route_helper do
+    quote do
+      def routes() do
+        Yemma.config()
+        |> Map.fetch!(:routes)
+      end
     end
   end
 

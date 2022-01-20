@@ -31,7 +31,7 @@ defmodule YemmaWeb.UserSessionController do
     with {:ok, user} <- Users.register_or_get_by_email(email) do
       Users.deliver_magic_link_instructions(
         user,
-        &Routes.user_confirmation_url(conn, :edit, &1)
+        &routes().user_confirmation_url(conn, :edit, &1)
       )
 
       conn

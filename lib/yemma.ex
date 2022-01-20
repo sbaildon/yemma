@@ -6,23 +6,26 @@ defmodule Yemma do
   Contexts are also responsible for managing your data, regardless
   if it comes from the database, an external API or others.
   """
-  use Supervisor
+  use GenServer
+
+  alias Yemma.Config
 
   def start_link(opts) do
-    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+    conf = Config.new(opts)
+    GenServer.start_link(__MODULE__, conf, name: __MODULE__)
   end
 
-  def child_spec(opts) do
-    opts
-    |> super()
-    |> Supervisor.child_spec(id: Keyword.get(opts, :name, __MODULE__))
+  @impl true
+  def init(conf) do
+    {:ok, conf}
   end
 
-  def init(_opts) do
-    children = [
-      YemmaWeb.Telemetry
-    ]
+  @impl true
+  def handle_call(:config, _from, conf) do
+    {:reply, conf, conf}
+  end
 
-    Supervisor.init(children, strategy: :one_for_one)
+  def config() do
+    GenServer.call(Yemma, :config)
   end
 end
