@@ -23,6 +23,17 @@ defmodule YemmaWeb do
 
       import Plug.Conn
       import YemmaWeb.Gettext
+
+      def action(%{assigns: assigns} = conn, _opts) do
+        {view, assigns} = Map.pop(assigns, :view, nil)
+
+        conn = if view, do: put_view(conn, view), else: conn
+        conn = %{conn | assigns: assigns}
+
+        args = [conn, conn.params]
+        apply(__MODULE__, action_name(conn), args)
+      end
+
       unquote(route_helper())
     end
   end

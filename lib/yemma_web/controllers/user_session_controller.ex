@@ -4,16 +4,6 @@ defmodule YemmaWeb.UserSessionController do
   alias Yemma.Users
   alias YemmaWeb.UserAuth
 
-  def action(%{assigns: assigns} = conn, _opts) do
-    {view, assigns} = Map.pop(assigns, :view, nil)
-
-    conn = if view, do: put_view(conn, view), else: conn
-    conn = %{conn | assigns: assigns}
-
-    args = [conn, conn.params]
-    apply(__MODULE__, action_name(conn), args)
-  end
-
   def new(conn, params) do
     conn
     |> maybe_store_return_to(params)
