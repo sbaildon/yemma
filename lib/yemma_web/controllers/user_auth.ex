@@ -163,12 +163,12 @@ defmodule YemmaWeb.UserAuth do
   If you want to enforce the user email is confirmed before
   they use the application at all, here would be a good place.
   """
-  def require_authenticated_user(conn, _opts) do
+  def require_authenticated_user(%Config{} = conf, conn, _opts) do
     if conn.assigns[:current_user] do
       conn
     else
       redirect_to =
-        routes().user_session_url(conn, :new)
+        conf.routes.user_session_url(conn, :new)
         |> URI.parse()
         |> Map.update!(:query, fn
           nil ->
@@ -208,10 +208,5 @@ defmodule YemmaWeb.UserAuth do
       nil ->
         "/"
     end
-  end
-
-  defp routes() do
-    Yemma.config()
-    |> Map.fetch!(:routes)
   end
 end

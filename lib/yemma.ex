@@ -43,7 +43,9 @@ defmodule Yemma do
 
   defdelegate fetch_current_user(conn, opts), to: UserAuth
 
-  defdelegate require_authenticated_user(conn, opts), to: UserAuth
+  def require_authenticated_user(name \\ __MODULE__, conn, opts) do
+    name |> config() |> UserAuth.require_authenticated_user(conn, opts)
+  end
 
   @doc """
   Used for routes that require the user to not be authenticated.
