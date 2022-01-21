@@ -158,8 +158,12 @@ defmodule Yemma do
   end
 
   def put_name_in_conn(conn, opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
+    conf =
+      Keyword.get(opts, :name, __MODULE__)
+      |> config()
 
-    Plug.Conn.put_private(conn, :yemma_name, name)
+    conn
+    |> Plug.Conn.put_private(:yemma_name, conf.name)
+    |> Plug.Conn.put_private(:yemma_routes, conf.routes)
   end
 end
