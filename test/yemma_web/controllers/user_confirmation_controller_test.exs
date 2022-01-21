@@ -6,7 +6,7 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
   alias YemmaTest.Repo
 
   setup do
-    conf = start_supervised_yemma!() |> Yemma.config()
+    conf = start_supervised_yemma!()
     %{user: user_fixture(conf), conf: conf}
   end
 

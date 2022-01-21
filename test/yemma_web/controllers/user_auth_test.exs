@@ -249,7 +249,7 @@ defmodule YemmaWeb.UserAuthTest do
     end
 
     test "redirects if user is not authenticated", %{conn: conn} do
-      conf = start_supervised_yemma!() |> Yemma.config()
+      conf = start_supervised_yemma!()
 
       conn = conn |> Yemma.require_authenticated_user([])
       assert conn.halted

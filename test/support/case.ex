@@ -7,7 +7,7 @@ defmodule Yemma.Case do
 
   def start_supervised_yemma!(opts) do
     start_supervised!({Yemma, yemma_opts(opts)})
-    Yemma
+    |> Yemma.config()
   end
 
   def yemma_opts(), do: yemma_opts([])

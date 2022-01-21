@@ -4,8 +4,7 @@ defmodule YemmaWeb.UserSessionControllerTest do
   import Yemma.UsersFixtures
 
   setup do
-    name = start_supervised_yemma!()
-    conf = Yemma.config(name)
+    conf = start_supervised_yemma!()
     %{user: user_fixture(conf), conf: conf}
   end
 
