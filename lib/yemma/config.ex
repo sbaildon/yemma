@@ -31,6 +31,7 @@ defmodule Yemma.Config do
       Enum.reject(required_functions, fn {func, arity} ->
         function_exported?(routes, func, arity)
       end)
+      |> Enum.map(fn {func, arity} -> "#{func}/#{arity}" end)
 
     if length(unexported) > 0 do
       raise ArgumentError, ":routes, #{routes} needs to export: #{Enum.join(unexported, ", ")}"
