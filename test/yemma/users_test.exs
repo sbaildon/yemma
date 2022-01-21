@@ -6,82 +6,86 @@ defmodule Yemma.UsersTest do
   import Yemma.UsersFixtures
   alias Yemma.Users.{User, UserToken}
 
+  setup do
+    %{conf: yemma_config()}
+  end
+
   describe "get_user_by_email/1" do
-    test "does not return the user if the email does not exist" do
-      refute Users.get_user_by_email("unknown@example.com")
+    test "does not return the user if the email does not exist", %{conf: conf} do
+      refute Users.get_user_by_email(conf, "unknown@example.com")
     end
 
-    test "returns the user if the email exists" do
-      %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Users.get_user_by_email(user.email)
+    test "returns the user if the email exists", %{conf: conf} do
+      %{id: id} = user = user_fixture(conf)
+      assert %User{id: ^id} = Users.get_user_by_email(conf, user.email)
     end
   end
 
   describe "get_user!/1" do
-    test "raises if id is invalid" do
+    test "raises if id is invalid", %{conf: conf} do
       assert_raise Ecto.NoResultsError, fn ->
-        Users.get_user!(-1)
+        Users.get_user!(conf, -1)
       end
     end
 
-    test "returns the user with the given id" do
-      %{id: id} = user = user_fixture()
-      assert %User{id: ^id} = Users.get_user!(user.id)
+    test "returns the user with the given id", %{conf: conf} do
+      %{id: id} = user = user_fixture(conf)
+      assert %User{id: ^id} = Users.get_user!(conf, user.id)
     end
   end
 
   describe "register_user/1" do
-    test "requires email to be set" do
-      {:error, changeset} = Users.register_user(%{})
+    test "requires email to be set", %{conf: conf} do
+      {:error, changeset} = Users.register_user(conf, %{})
 
       assert %{
                email: ["can't be blank"]
              } = errors_on(changeset)
     end
 
-    test "validates email when given" do
-      {:error, changeset} = Users.register_user(%{email: "not valid"})
+    test "validates email when given", %{conf: conf} do
+      {:error, changeset} = Users.register_user(conf, %{email: "not valid"})
 
       assert %{
                email: ["must have the @ sign and no spaces"]
              } = errors_on(changeset)
     end
 
-    test "validates maximum values for email for security" do
+    test "validates maximum values for email for security", %{conf: conf} do
       too_long = String.duplicate("db", 100)
-      {:error, changeset} = Users.register_user(%{email: too_long})
+      {:error, changeset} = Users.register_user(conf, %{email: too_long})
       assert "should be at most 160 character(s)" in errors_on(changeset).email
     end
 
-    test "validates email uniqueness" do
-      %{email: email} = user_fixture()
-      {:error, changeset} = Users.register_user(%{email: email})
+    test "validates email uniqueness", %{conf: conf} do
+      %{email: email} = user_fixture(conf)
+      {:error, changeset} = Users.register_user(conf, %{email: email})
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Users.register_user(%{email: String.upcase(email)})
+      {:error, changeset} = Users.register_user(conf, %{email: String.upcase(email)})
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "registers users" do
+    test "registers users", %{conf: conf} do
       email = unique_user_email()
-      {:ok, user} = Users.register_user(valid_user_attributes(email: email))
+      {:ok, user} = Users.register_user(conf, valid_user_attributes(email: email))
       assert user.email == email
       assert is_nil(user.confirmed_at)
     end
   end
 
   describe "register_or_get_by_email/1" do
-    test "gets an existing user" do
-      %{email: email} = user_fixture()
+    test "gets an existing user", %{conf: conf} do
+      %{email: email} = user_fixture(conf)
 
-      {:ok, user} = Users.register_or_get_by_email(email)
+      {:ok, user} = Users.register_or_get_by_email(conf, email)
       assert user.email == email
     end
 
-    test "registers if email doesn't exist" do
+    test "registers if email doesn't exist", %{conf: conf} do
       email = unique_user_email()
-      {:ok, user} = Users.register_or_get_by_email(email)
+      {:ok, user} = Users.register_or_get_by_email(conf, email)
       assert user.email == email
       assert is_nil(user.confirmed_at)
     end
@@ -115,8 +119,8 @@ defmodule Yemma.UsersTest do
   end
 
   describe "apply_user_email/3" do
-    setup do
-      %{user: user_fixture()}
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
     end
 
     test "requires email to change", %{user: user} do
@@ -138,31 +142,31 @@ defmodule Yemma.UsersTest do
       assert "should be at most 160 character(s)" in errors_on(changeset).email
     end
 
-    test "validates email uniqueness", %{user: user} do
-      %{email: email} = user_fixture()
+    test "validates email uniqueness", %{user: user, conf: conf} do
+      %{email: email} = user_fixture(conf)
 
       {:error, changeset} = Users.apply_user_email(user, %{email: email})
 
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "applies the email without persisting it", %{user: user} do
+    test "applies the email without persisting it", %{user: user, conf: conf} do
       email = unique_user_email()
       {:ok, user} = Users.apply_user_email(user, %{email: email})
       assert user.email == email
-      assert Users.get_user!(user.id).email != email
+      assert Users.get_user!(conf, user.id).email != email
     end
   end
 
   describe "deliver_update_email_instructions/3" do
-    setup do
-      %{user: user_fixture()}
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
     end
 
-    test "sends token through notification", %{user: user} do
+    test "sends token through notification", %{user: user, conf: conf} do
       token =
         extract_user_token(fn url ->
-          Users.deliver_update_email_instructions(user, "current@example.com", url)
+          Users.deliver_update_email_instructions(conf, user, "current@example.com", url)
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
@@ -174,20 +178,25 @@ defmodule Yemma.UsersTest do
   end
 
   describe "update_user_email/2" do
-    setup do
-      user = user_fixture()
+    setup %{conf: conf} do
+      user = user_fixture(conf)
       email = unique_user_email()
 
       token =
         extract_user_token(fn url ->
-          Users.deliver_update_email_instructions(%{user | email: email}, user.email, url)
+          Users.deliver_update_email_instructions(conf, %{user | email: email}, user.email, url)
         end)
 
       %{user: user, token: token, email: email}
     end
 
-    test "updates the email with a valid token", %{user: user, token: token, email: email} do
-      assert Users.update_user_email(user, token) == :ok
+    test "updates the email with a valid token", %{
+      user: user,
+      token: token,
+      email: email,
+      conf: conf
+    } do
+      assert Users.update_user_email(conf, user, token) == :ok
       changed_user = Repo.get!(User, user.id)
       assert changed_user.email != user.email
       assert changed_user.email == email
@@ -196,33 +205,35 @@ defmodule Yemma.UsersTest do
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email with invalid token", %{user: user} do
-      assert Users.update_user_email(user, "oops") == :error
+    test "does not update email with invalid token", %{user: user, conf: conf} do
+      assert Users.update_user_email(conf, user, "oops") == :error
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email if user email changed", %{user: user, token: token} do
-      assert Users.update_user_email(%{user | email: "current@example.com"}, token) == :error
+    test "does not update email if user email changed", %{user: user, token: token, conf: conf} do
+      assert Users.update_user_email(conf, %{user | email: "current@example.com"}, token) ==
+               :error
+
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not update email if token expired", %{user: user, token: token} do
+    test "does not update email if token expired", %{user: user, token: token, conf: conf} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert Users.update_user_email(user, token) == :error
+      assert Users.update_user_email(conf, user, token) == :error
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
   end
 
   describe "generate_user_session_token/1" do
-    setup do
-      %{user: user_fixture()}
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
     end
 
-    test "generates a token", %{user: user} do
-      token = Users.generate_user_session_token(user)
+    test "generates a token", %{user: user, conf: conf} do
+      token = Users.generate_user_session_token(conf, user)
       assert user_token = Repo.get_by(UserToken, token: token)
       assert user_token.context == "session"
 
@@ -230,7 +241,7 @@ defmodule Yemma.UsersTest do
       assert_raise Ecto.ConstraintError, fn ->
         Repo.insert!(%UserToken{
           token: user_token.token,
-          user_id: user_fixture().id,
+          user_id: user_fixture(conf).id,
           context: "session"
         })
       end
@@ -238,45 +249,45 @@ defmodule Yemma.UsersTest do
   end
 
   describe "get_user_by_session_token/1" do
-    setup do
-      user = user_fixture()
-      token = Users.generate_user_session_token(user)
+    setup %{conf: conf} do
+      user = user_fixture(conf)
+      token = Users.generate_user_session_token(conf, user)
       %{user: user, token: token}
     end
 
-    test "returns user by token", %{user: user, token: token} do
-      assert session_user = Users.get_user_by_session_token(token)
+    test "returns user by token", %{user: user, token: token, conf: conf} do
+      assert session_user = Users.get_user_by_session_token(conf, token)
       assert session_user.id == user.id
     end
 
-    test "does not return user for invalid token" do
-      refute Users.get_user_by_session_token("oops")
+    test "does not return user for invalid token", %{conf: conf} do
+      refute Users.get_user_by_session_token(conf, "oops")
     end
 
-    test "does not return user for expired token", %{token: token} do
+    test "does not return user for expired token", %{token: token, conf: conf} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      refute Users.get_user_by_session_token(token)
+      refute Users.get_user_by_session_token(conf, token)
     end
   end
 
   describe "delete_session_token/1" do
-    test "deletes the token" do
-      user = user_fixture()
-      token = Users.generate_user_session_token(user)
-      assert Users.delete_session_token(token) == :ok
-      refute Users.get_user_by_session_token(token)
+    test "deletes the token", %{conf: conf} do
+      user = user_fixture(conf)
+      token = Users.generate_user_session_token(conf, user)
+      assert Users.delete_session_token(conf, token) == :ok
+      refute Users.get_user_by_session_token(conf, token)
     end
   end
 
   describe "deliver_user_confirmation_instructions/2" do
-    setup do
-      %{user: user_fixture()}
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
     end
 
-    test "sends token through notification", %{user: user} do
+    test "sends token through notification", %{user: user, conf: conf} do
       token =
         extract_user_token(fn url ->
-          Users.deliver_user_confirmation_instructions(user, url)
+          Users.deliver_user_confirmation_instructions(conf, user, url)
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
@@ -288,14 +299,14 @@ defmodule Yemma.UsersTest do
   end
 
   describe "deliver_magic_link_instructions/2" do
-    setup do
-      %{user: user_fixture()}
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
     end
 
-    test "sends token through notification", %{user: user} do
+    test "sends token through notification", %{user: user, conf: conf} do
       token =
         extract_user_token(fn url ->
-          Users.deliver_magic_link_instructions(user, url)
+          Users.deliver_magic_link_instructions(conf, user, url)
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
@@ -307,34 +318,34 @@ defmodule Yemma.UsersTest do
   end
 
   describe "confirm_user/1" do
-    setup do
-      user = user_fixture()
+    setup %{conf: conf} do
+      user = user_fixture(conf)
 
       token =
         extract_user_token(fn url ->
-          Users.deliver_magic_link_instructions(user, url)
+          Users.deliver_magic_link_instructions(conf, user, url)
         end)
 
       %{user: user, token: token}
     end
 
-    test "confirms the email with a valid token", %{user: user, token: token} do
-      assert {:ok, confirmed_user} = Users.confirm_user(token)
+    test "confirms the email with a valid token", %{user: user, token: token, conf: conf} do
+      assert {:ok, confirmed_user} = Users.confirm_user(conf, token)
       assert confirmed_user.confirmed_at
       assert confirmed_user.confirmed_at != user.confirmed_at
       assert Repo.get!(User, user.id).confirmed_at
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not confirm with invalid token", %{user: user} do
-      assert Users.confirm_user("oops") == :error
+    test "does not confirm with invalid token", %{user: user, conf: conf} do
+      assert Users.confirm_user(conf, "oops") == :error
       refute Repo.get!(User, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
-    test "does not confirm email if token expired", %{user: user, token: token} do
+    test "does not confirm email if token expired", %{user: user, token: token, conf: conf} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
-      assert Users.confirm_user(token) == :error
+      assert Users.confirm_user(conf, token) == :error
       refute Repo.get!(User, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end

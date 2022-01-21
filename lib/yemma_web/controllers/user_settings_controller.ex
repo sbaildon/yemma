@@ -5,17 +5,18 @@ defmodule YemmaWeb.UserSettingsController do
 
   plug :assign_email_changesets
 
-  def edit(conn, _params) do
+  def edit(conn, _params, _name) do
     render(conn, "edit.html")
   end
 
-  def update(conn, %{"action" => "update_email"} = params) do
+  def update(conn, %{"action" => "update_email"} = params, name) do
     %{"user" => user_params} = params
     user = conn.assigns.current_user
 
     case Users.apply_user_email(user, user_params) do
       {:ok, applied_user} ->
-        Users.deliver_update_email_instructions(
+        Yemma.deliver_update_email_instructions(
+          name,
           applied_user,
           user.email,
           &routes().user_settings_url(conn, :confirm_email, &1)
@@ -33,8 +34,8 @@ defmodule YemmaWeb.UserSettingsController do
     end
   end
 
-  def confirm_email(conn, %{"token" => token}) do
-    case Users.update_user_email(conn.assigns.current_user, token) do
+  def confirm_email(conn, %{"token" => token}, name) do
+    case Yemma.update_user_email(name, conn.assigns.current_user, token) do
       :ok ->
         conn
         |> put_flash(:info, "Email changed successfully.")
