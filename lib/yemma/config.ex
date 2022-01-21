@@ -4,15 +4,19 @@ defmodule Yemma.Config do
           signed_in_dest: {module(), function(), list()} | binary(),
           cookie_domain: String.t(),
           pubsub_server: module(),
-          secret_key_base: String.t()
+          secret_key_base: String.t(),
+          repo: nil,
+          name: term()
         }
 
-  @enforce_keys [:routes, :secret_key_base]
+  @enforce_keys [:routes, :secret_key_base, :repo]
   defstruct routes: nil,
             signed_in_dest: "/",
             cookie_domain: nil,
             pubsub_server: nil,
-            secret_key_base: nil
+            secret_key_base: nil,
+            repo: nil,
+            name: Yemma
 
   @spec new(Keyword.t()) :: t()
   def new(opts) when is_list(opts) do
@@ -51,6 +55,11 @@ defmodule Yemma.Config do
 
   defp validate_opt!({:secret_key_base, secret_key_base}),
     do: validate_opt!(:binary, secret_key_base, ":secret_key_base must be a string")
+
+  defp validate_opt!({:repo, repo}),
+    do: validate_opt!(:atom, repo, ":repo must be an atom, eg. MyApp.Repo")
+
+  defp validate_opt!({:name, _}), do: :ok
 
   defp validate_opt!(:binary, opt, message) do
     unless is_binary(opt) do

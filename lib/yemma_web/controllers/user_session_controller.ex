@@ -1,9 +1,7 @@
 defmodule YemmaWeb.UserSessionController do
   use YemmaWeb, :controller
 
-  alias Yemma.Users
-
-  def new(conn, params) do
+  def new(conn, params, _name) do
     conn
     |> maybe_store_return_to(params)
     |> render("new.html", error_message: nil)
@@ -14,11 +12,12 @@ defmodule YemmaWeb.UserSessionController do
 
   defp maybe_store_return_to(conn, _params), do: delete_session(conn, :user_return_to)
 
-  def create(conn, %{"user" => user_params}) do
+  def create(conn, %{"user" => user_params}, name) do
     %{"email" => email} = user_params
 
-    with {:ok, user} <- Users.register_or_get_by_email(email) do
-      Users.deliver_magic_link_instructions(
+    with {:ok, user} <- Yemma.register_or_get_by_email(name, email) do
+      Yemma.deliver_magic_link_instructions(
+        name,
         user,
         &routes().user_confirmation_url(conn, :edit, &1)
       )
@@ -32,9 +31,11 @@ defmodule YemmaWeb.UserSessionController do
     end
   end
 
-  def delete(conn, _params) do
-    conn
-    |> put_flash(:info, "Logged out successfully.")
-    |> Yemma.log_out_user()
+  def delete(conn, _params, name) do
+    conn =
+      conn
+      |> put_flash(:info, "Logged out successfully.")
+
+    Yemma.log_out_user(name, conn)
   end
 end

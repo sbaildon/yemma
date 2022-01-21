@@ -24,6 +24,7 @@ defmodule Yemma.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Yemma.DataCase
+      import Yemma.Case
     end
   end
 

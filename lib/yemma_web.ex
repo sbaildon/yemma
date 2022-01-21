@@ -30,7 +30,7 @@ defmodule YemmaWeb do
         conn = if view, do: put_view(conn, view), else: conn
         conn = %{conn | assigns: assigns}
 
-        args = [conn, conn.params]
+        args = [conn, conn.params, conn.private.yemma_name]
         apply(__MODULE__, action_name(conn), args)
       end
 

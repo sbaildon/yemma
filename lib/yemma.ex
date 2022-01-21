@@ -8,7 +8,7 @@ defmodule Yemma do
   """
   use GenServer
 
-  alias Yemma.Config
+  alias Yemma.{Config, Users}
   alias YemmaWeb.UserAuth
 
   def start_link(opts) do
@@ -84,5 +84,82 @@ defmodule Yemma do
   """
   def redirect_if_user_is_authenticated(name \\ __MODULE__, conn, opts) do
     name |> config() |> UserAuth.redirect_if_user_is_authenticated(conn, opts)
+  end
+
+  def get_user_by_email(name \\ __MODULE__, email) when is_binary(email) do
+    name |> config() |> Users.get_user_by_email(email)
+  end
+
+  def get_user!(name \\ __MODULE__, id) do
+    name |> config() |> Users.get_user!(id)
+  end
+
+  def register_user(name \\ __MODULE__, attrs) do
+    name |> config() |> Users.register_user(attrs)
+  end
+
+  def register_or_get_by_email(name \\ __MODULE__, email) when is_binary(email) do
+    name |> config() |> Users.register_or_get_by_email(email)
+  end
+
+  defdelegate change_user_registration(user, attrs \\ %{}), to: Users
+  defdelegate change_user_email(user, attrs \\ %{}), to: Users
+  defdelegate apply_user_email(user, attrs), to: Users
+
+  def update_user_email(name \\ __MODULE__, user, token) do
+    name |> config() |> Users.update_user_email(user, token)
+  end
+
+  def deliver_update_email_instructions(
+        name \\ __MODULE__,
+        user,
+        current_email,
+        update_email_url_fun
+      ) do
+    name
+    |> config()
+    |> Users.deliver_update_email_instructions(user, current_email, update_email_url_fun)
+  end
+
+  def generate_user_session_token(name \\ __MODULE__, user) do
+    name |> config() |> Users.generate_user_session_token(user)
+  end
+
+  def get_user_by_session_token(name \\ __MODULE__, token) do
+    name |> config() |> Users.get_user_by_session_token(token)
+  end
+
+  def delete_session_token(name \\ __MODULE__, token) do
+    name |> config() |> Users.delete_session_token(token)
+  end
+
+  def deliver_user_confirmation_instructions(
+        name \\ __MODULE__,
+        user,
+        confirmation_email_url_fun
+      ) do
+    name
+    |> config()
+    |> Users.deliver_user_confirmation_instructions(user, confirmation_email_url_fun)
+  end
+
+  def deliver_magic_link_instructions(
+        name \\ __MODULE__,
+        user,
+        magic_link_email_url_fun
+      ) do
+    name
+    |> config()
+    |> Users.deliver_magic_link_instructions(user, magic_link_email_url_fun)
+  end
+
+  def confirm_user(name \\ __MODULE__, token) do
+    name |> config() |> Users.confirm_user(token)
+  end
+
+  def put_name_in_conn(conn, opts) do
+    name = Keyword.get(opts, :name, __MODULE__)
+
+    Plug.Conn.put_private(conn, :yemma_name, name)
   end
 end

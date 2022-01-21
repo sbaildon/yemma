@@ -25,7 +25,7 @@ defmodule YemmaWeb.UserAuth do
   if you are not using LiveView.
   """
   def log_in_user(%Config{} = conf, conn, user) do
-    token = Users.generate_user_session_token(user)
+    token = Users.generate_user_session_token(conf, user)
     user_return_to = get_session(conn, :user_return_to)
 
     conn
@@ -73,7 +73,7 @@ defmodule YemmaWeb.UserAuth do
   """
   def log_out_user(%Config{} = conf, conn) do
     user_token = get_session(conn, :user_token)
-    user_token && Users.delete_session_token(user_token)
+    user_token && Users.delete_session_token(conf, user_token)
 
     if live_socket_id = get_session(conn, :live_socket_id) do
       pubsub = conf.pubsub_server
@@ -94,7 +94,7 @@ defmodule YemmaWeb.UserAuth do
   """
   def fetch_current_user(%Config{} = conf, conn, _opts) do
     {user_token, conn} = ensure_user_token(conn, conf)
-    user = user_token && Users.get_user_by_session_token(user_token)
+    user = user_token && Users.get_user_by_session_token(conf, user_token)
     assign(conn, :current_user, user)
   end
 

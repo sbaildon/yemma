@@ -44,13 +44,15 @@ defmodule Phoenix.YemmaTest.Router do
     only: [
       redirect_if_user_is_authenticated: 2,
       require_authenticated_user: 2,
-      fetch_current_user: 2
+      fetch_current_user: 2,
+      put_name_in_conn: 2
     ]
 
   pipeline :browser do
     plug :fetch_session
     plug :fetch_flash
     plug :fetch_query_params
+    plug :put_name_in_conn
     plug :fetch_current_user
   end
 

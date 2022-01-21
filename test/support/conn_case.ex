@@ -23,6 +23,7 @@ defmodule YemmaWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import YemmaWeb.ConnCase
+      import Yemma.Case
 
       defdelegate view_template(conn), to: Phoenix.Controller
 
@@ -60,7 +61,7 @@ defmodule YemmaWeb.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    token = Yemma.Users.generate_user_session_token(user)
+    token = Yemma.generate_user_session_token(user)
 
     conn
     |> Phoenix.ConnTest.init_test_session(%{})
@@ -78,22 +79,4 @@ defmodule YemmaWeb.ConnCase do
     |> Map.replace!(:query, nil)
     |> URI.to_string()
   end
-
-  def start_supervised_yemma!(), do: start_supervised_yemma!([])
-
-  def start_supervised_yemma!(opts) do
-    opts =
-      opts
-      |> Keyword.put_new(:routes, Phoenix.YemmaTest.Router.Helpers)
-      |> Keyword.put_new(:secret_key_base, random_string(64))
-
-    start_supervised!({Yemma, opts})
-  end
-
-  defp random_string(length) when length > 31 do
-    :crypto.strong_rand_bytes(length) |> Base.encode64(padding: false) |> binary_part(0, length)
-  end
-
-  defp random_string(_),
-    do: raise(ArgumentError, "The secret should be at least 32 characters long")
 end

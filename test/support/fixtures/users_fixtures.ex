@@ -12,11 +12,10 @@ defmodule Yemma.UsersFixtures do
     })
   end
 
-  def user_fixture(attrs \\ %{}) do
-    {:ok, user} =
-      attrs
-      |> valid_user_attributes()
-      |> Yemma.Users.register_user()
+  def user_fixture(conf, attrs \\ %{}) do
+    attrs = attrs |> valid_user_attributes()
+
+    {:ok, user} = Yemma.Users.register_user(conf, attrs)
 
     user
   end
