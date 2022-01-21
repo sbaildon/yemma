@@ -78,4 +78,14 @@ defmodule YemmaWeb.ConnCase do
     |> Map.replace!(:query, nil)
     |> URI.to_string()
   end
+
+  def start_supervised_yemma!(), do: start_supervised_yemma!([])
+
+  def start_supervised_yemma!(opts) do
+    opts =
+      opts
+      |> Keyword.put_new(:routes, Phoenix.YemmaTest.Router.Helpers)
+
+    start_supervised!({Yemma, opts})
+  end
 end

@@ -40,7 +40,12 @@ end
 defmodule Phoenix.YemmaTest.Router do
   use Phoenix.Router
 
-  import YemmaWeb.UserAuth
+  import Yemma,
+    only: [
+      redirect_if_user_is_authenticated: 2,
+      require_authenticated_user: 2,
+      fetch_current_user: 2
+    ]
 
   pipeline :browser do
     plug :fetch_session
@@ -78,11 +83,14 @@ defmodule Phoenix.YemmaTest.Router do
   end
 end
 
-Application.put_env(:yemma_test, Yemma, routes: Phoenix.YemmaTest.Router.Helpers)
+Application.put_env(:yemma_test, Yemma,
+  routes: Phoenix.YemmaTest.Router.Helpers,
+  signed_in_dest:
+    {Phoenix.YemmaTest.Router.Helpers, :page_url, [Phoenix.YemmaTest.Endpoint, :index]}
+)
 
 Supervisor.start_link(
   [
-    {Yemma, Application.fetch_env!(:yemma_test, Yemma)},
     {Phoenix.PubSub, name: Phoenix.YemmaTest.PubSub, adapter: Phoenix.PubSub.PG2},
     Phoenix.YemmaTest.Endpoint
   ],

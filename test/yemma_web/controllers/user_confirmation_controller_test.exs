@@ -11,6 +11,8 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
 
   describe "GET /users/confirm/:token" do
     test "does not create a session from an invalid token", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn = get(conn, Routes.user_confirmation_path(conn, :edit, "garbage"))
       assert redirected_to(conn)
       refute get_session(conn, :user_token)
@@ -18,6 +20,8 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
     end
 
     test "confirms the given token once", %{conn: conn, user: %{id: user_id} = user} do
+      start_supervised_yemma!()
+
       token =
         extract_user_token(fn url ->
           Users.deliver_magic_link_instructions(user, url)

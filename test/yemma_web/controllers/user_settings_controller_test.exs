@@ -8,12 +8,16 @@ defmodule YemmaWeb.UserSettingsControllerTest do
 
   describe "GET /users/settings" do
     test "renders settings page", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn = get(conn, Routes.user_settings_path(conn, :edit))
       response = html_response(conn, 200)
       assert response =~ "<h1>Settings</h1>"
     end
 
     test "redirects if user is not logged in" do
+      start_supervised_yemma!()
+
       conn = build_conn()
       conn = get(conn, Routes.user_settings_path(conn, :edit))
       assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)
@@ -23,6 +27,8 @@ defmodule YemmaWeb.UserSettingsControllerTest do
   describe "PUT /users/settings (change email form)" do
     @tag :capture_log
     test "updates the user email", %{conn: conn, user: user} do
+      start_supervised_yemma!()
+
       conn =
         put(conn, Routes.user_settings_path(conn, :update), %{
           "action" => "update_email",
@@ -35,6 +41,8 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     end
 
     test "does not update email on invalid data", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn =
         put(conn, Routes.user_settings_path(conn, :update), %{
           "action" => "update_email",
@@ -60,6 +68,8 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     end
 
     test "updates the user email once", %{conn: conn, user: user, token: token, email: email} do
+      start_supervised_yemma!()
+
       conn = get(conn, Routes.user_settings_path(conn, :confirm_email, token))
       assert redirected_to(conn) == Routes.user_settings_path(conn, :edit)
       assert get_flash(conn, :info) =~ "Email changed successfully"
@@ -72,6 +82,8 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     end
 
     test "does not update email with invalid token", %{conn: conn, user: user} do
+      start_supervised_yemma!()
+
       conn = get(conn, Routes.user_settings_path(conn, :confirm_email, "oops"))
       assert redirected_to(conn) == Routes.user_settings_path(conn, :edit)
       assert get_flash(conn, :error) =~ "Email change link is invalid or it has expired"
@@ -79,6 +91,8 @@ defmodule YemmaWeb.UserSettingsControllerTest do
     end
 
     test "redirects if user is not logged in", %{token: token} do
+      start_supervised_yemma!()
+
       conn = build_conn()
       conn = get(conn, Routes.user_settings_path(conn, :confirm_email, token))
       assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)

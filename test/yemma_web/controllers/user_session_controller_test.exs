@@ -9,17 +9,23 @@ defmodule YemmaWeb.UserSessionControllerTest do
 
   describe "GET /users/log_in" do
     test "renders log in page", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn = get(conn, Routes.user_session_path(conn, :new))
       response = html_response(conn, 200)
       assert response =~ "<h1>Log in</h1>"
     end
 
     test "redirects if already logged in", %{conn: conn, user: user} do
+      start_supervised_yemma!()
+
       conn = conn |> log_in_user(user) |> get(Routes.user_session_path(conn, :new))
       assert redirected_to(conn)
     end
 
     test "saves return to location if passed as a query param", %{conn: conn} do
+      start_supervised_yemma!()
+
       return_to = "http://example.com"
       conn = get(conn, Routes.user_session_path(conn, :new, return_to: return_to))
       assert get_session(conn, :user_return_to) == return_to
@@ -31,6 +37,8 @@ defmodule YemmaWeb.UserSessionControllerTest do
 
   describe "POST /users/log_in" do
     test "presents instructions for magic link", %{conn: conn, user: user} do
+      start_supervised_yemma!()
+
       conn =
         conn
         |> post(Routes.user_session_path(conn, :create), %{
@@ -44,6 +52,8 @@ defmodule YemmaWeb.UserSessionControllerTest do
     end
 
     test "renders log in page if unable to find user for any reason", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn =
         conn
         |> post(Routes.user_session_path(conn, :create), %{
@@ -58,6 +68,8 @@ defmodule YemmaWeb.UserSessionControllerTest do
 
   describe "DELETE /users/log_out" do
     test "logs the user out", %{conn: conn, user: user} do
+      start_supervised_yemma!()
+
       conn = conn |> log_in_user(user) |> delete(Routes.user_session_path(conn, :delete))
       assert redirected_to(conn) == "/"
       refute get_session(conn, :user_token)
@@ -65,6 +77,8 @@ defmodule YemmaWeb.UserSessionControllerTest do
     end
 
     test "succeeds even if the user is not logged in", %{conn: conn} do
+      start_supervised_yemma!()
+
       conn = delete(conn, Routes.user_session_path(conn, :delete))
       assert redirected_to(conn) == "/"
       refute get_session(conn, :user_token)

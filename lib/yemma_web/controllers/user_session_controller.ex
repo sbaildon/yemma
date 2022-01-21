@@ -2,7 +2,6 @@ defmodule YemmaWeb.UserSessionController do
   use YemmaWeb, :controller
 
   alias Yemma.Users
-  alias YemmaWeb.UserAuth
 
   def new(conn, params) do
     conn
@@ -36,6 +35,6 @@ defmodule YemmaWeb.UserSessionController do
   def delete(conn, _params) do
     conn
     |> put_flash(:info, "Logged out successfully.")
-    |> UserAuth.log_out_user()
+    |> Yemma.log_out_user()
   end
 end

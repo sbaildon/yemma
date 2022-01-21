@@ -3,6 +3,7 @@ defmodule YemmaWeb.UserAuth do
   import Phoenix.Controller
 
   alias Yemma.Users
+  alias Yemma.Config
 
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
@@ -23,7 +24,7 @@ defmodule YemmaWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user) do
+  def log_in_user(%Config{} = conf, conn, user) do
     token = Users.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
 
@@ -36,13 +37,13 @@ defmodule YemmaWeb.UserAuth do
         conn,
         @remember_me_cookie,
         token,
-        @remember_me_options ++ [domain: cookie_domain(conn)]
+        @remember_me_options ++ [domain: cookie_domain(conf, conn)]
       )
     end)
-    |> redirect(external: user_return_to || signed_in_path())
+    |> redirect(external: user_return_to || signed_in_path(conf))
   end
 
-  defp cookie_domain(conn), do: Application.get_env(:yemma, :cookie_domain) || conn.host()
+  defp cookie_domain(conf, conn), do: conf.cookie_domain || conn.host()
 
   # This function renews the session ID and erases the whole
   # session to avoid fixation attacks. If there is any data
@@ -70,7 +71,7 @@ defmodule YemmaWeb.UserAuth do
 
   It clears all session data for safety. See renew_session.
   """
-  def log_out_user(conn) do
+  def log_out_user(%Config{} = _conf, conn) do
     user_token = get_session(conn, :user_token)
     user_token && Users.delete_session_token(user_token)
 
@@ -131,9 +132,9 @@ defmodule YemmaWeb.UserAuth do
   @doc """
   Used for routes that require the user to not be authenticated.
   """
-  def redirect_if_user_is_authenticated(conn, opts) do
+  def redirect_if_user_is_authenticated(%Config{} = conf, conn, opts) do
     if conn.assigns[:current_user] do
-      redirect_to = parse_redirect_to(opts)
+      redirect_to = parse_redirect_to(conf, opts)
 
       conn
       |> redirect(external: redirect_to)
@@ -143,13 +144,16 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
-  defp parse_redirect_to(opts) do
+  defp parse_redirect_to(config, opts) do
     case opts[:to] do
-      nil ->
-        signed_in_path()
-
       {m, f, a} ->
         apply(m, f, a)
+
+      dest when is_binary(dest) ->
+        dest
+
+      nil ->
+        signed_in_path(config)
     end
   end
 
@@ -193,10 +197,13 @@ defmodule YemmaWeb.UserAuth do
 
   defp maybe_forward_return_to(_), do: %{}
 
-  defp signed_in_path() do
-    case Application.get_env(:yemma, :signed_in_path) do
+  defp signed_in_path(%{signed_in_dest: signed_in_dest}) do
+    case signed_in_dest do
       {m, f, a} ->
         apply(m, f, a)
+
+      dest when is_binary(dest) ->
+        dest
 
       nil ->
         "/"
