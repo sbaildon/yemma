@@ -249,11 +249,11 @@ defmodule YemmaWeb.UserAuthTest do
     end
 
     test "redirects if user is not authenticated", %{conn: conn} do
-      start_supervised_yemma!()
+      conf = start_supervised_yemma!() |> Yemma.config()
 
       conn = conn |> Yemma.require_authenticated_user([])
       assert conn.halted
-      assert queryless_redirected_to(conn) == Routes.user_session_url(conn, :new)
+      assert queryless_redirected_to(conn) == conf.routes.user_session_url(conn, :new)
     end
 
     test "forwards the return to destination as a query param", %{conn: conn} do

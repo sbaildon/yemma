@@ -27,8 +27,6 @@ defmodule YemmaWeb.ConnCase do
 
       defdelegate view_template(conn), to: Phoenix.Controller
 
-      alias Phoenix.YemmaTest.Router.Helpers, as: Routes
-
       # The default endpoint for testing
       @endpoint Phoenix.YemmaTest.Endpoint
 
