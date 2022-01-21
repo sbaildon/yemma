@@ -142,14 +142,6 @@ defmodule Yemma.UsersTest do
       assert "should be at most 160 character(s)" in errors_on(changeset).email
     end
 
-    test "validates email uniqueness", %{user: user, conf: conf} do
-      %{email: email} = user_fixture(conf)
-
-      {:error, changeset} = Users.apply_user_email(user, %{email: email})
-
-      assert "has already been taken" in errors_on(changeset).email
-    end
-
     test "applies the email without persisting it", %{user: user, conf: conf} do
       email = unique_user_email()
       {:ok, user} = Users.apply_user_email(user, %{email: email})
