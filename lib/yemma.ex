@@ -41,7 +41,9 @@ defmodule Yemma do
     name |> config() |> UserAuth.log_out_user(conn)
   end
 
-  defdelegate fetch_current_user(conn, opts), to: UserAuth
+  def fetch_current_user(name \\ __MODULE__, conn, opts) do
+    name |> config() |> UserAuth.fetch_current_user(conn, opts)
+  end
 
   def require_authenticated_user(name \\ __MODULE__, conn, opts) do
     name |> config() |> UserAuth.require_authenticated_user(conn, opts)

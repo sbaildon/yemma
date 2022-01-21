@@ -85,7 +85,15 @@ defmodule YemmaWeb.ConnCase do
     opts =
       opts
       |> Keyword.put_new(:routes, Phoenix.YemmaTest.Router.Helpers)
+      |> Keyword.put_new(:secret_key_base, random_string(64))
 
     start_supervised!({Yemma, opts})
   end
+
+  defp random_string(length) when length > 31 do
+    :crypto.strong_rand_bytes(length) |> Base.encode64(padding: false) |> binary_part(0, length)
+  end
+
+  defp random_string(_),
+    do: raise(ArgumentError, "The secret should be at least 32 characters long")
 end

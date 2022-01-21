@@ -32,7 +32,7 @@ defmodule YemmaWeb.UserAuth do
     |> renew_session()
     |> put_session(:user_token, token)
     |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
-    |> with_issuing_secret_key(fn conn ->
+    |> with_issuing_secret_key(conf, fn conn ->
       put_resp_cookie(
         conn,
         @remember_me_cookie,
@@ -92,19 +92,19 @@ defmodule YemmaWeb.UserAuth do
   Authenticates the user by looking into the session
   and remember me token.
   """
-  def fetch_current_user(conn, _opts) do
-    {user_token, conn} = ensure_user_token(conn)
+  def fetch_current_user(%Config{} = conf, conn, _opts) do
+    {user_token, conn} = ensure_user_token(conn, conf)
     user = user_token && Users.get_user_by_session_token(user_token)
     assign(conn, :current_user, user)
   end
 
-  defp ensure_user_token(conn) do
+  defp ensure_user_token(conn, conf) do
     if user_token = get_session(conn, :user_token) do
       {user_token, conn}
     else
       conn =
         conn
-        |> with_issuing_secret_key(fn conn ->
+        |> with_issuing_secret_key(conf, fn conn ->
           fetch_cookies(conn, signed: [@remember_me_cookie])
         end)
 
@@ -116,8 +116,8 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
-  defp with_issuing_secret_key(conn, function) when is_function(function, 1) do
-    issuing_secret_key = Application.fetch_env!(:yemma, :secret_key_base)
+  defp with_issuing_secret_key(conn, conf, function) when is_function(function, 1) do
+    issuing_secret_key = conf.secret_key_base
     original_secret_key = Map.fetch!(conn, :secret_key_base)
 
     conn
