@@ -1,7 +1,6 @@
 defmodule YemmaWeb.UserAuthTest do
   use YemmaWeb.ConnCase
 
-  alias Yemma.Users
   import Yemma.UsersFixtures
 
   @remember_me_cookie "_yemma_web_user_remember_me"
@@ -11,7 +10,7 @@ defmodule YemmaWeb.UserAuthTest do
       conn
       |> init_test_session(%{})
 
-    %{user: user_fixture(), conn: conn}
+    %{user: user_fixture(yemma_config()), conn: conn}
   end
 
   describe "log_in_user/3" do
@@ -22,7 +21,7 @@ defmodule YemmaWeb.UserAuthTest do
       assert token = get_session(conn, :user_token)
       assert get_session(conn, :live_socket_id) == "users_sessions:#{Base.url_encode64(token)}"
       assert redirected_to(conn) == "/"
-      assert Users.get_user_by_session_token(token)
+      assert Yemma.get_user_by_session_token(token)
     end
 
     test "clears everything previously stored in the session", %{conn: conn, user: user} do
@@ -95,7 +94,7 @@ defmodule YemmaWeb.UserAuthTest do
     test "erases session and cookies", %{conn: conn, user: user} do
       start_supervised_yemma!()
 
-      user_token = Users.generate_user_session_token(user)
+      user_token = Yemma.generate_user_session_token(user)
 
       conn =
         conn
@@ -108,7 +107,7 @@ defmodule YemmaWeb.UserAuthTest do
       refute conn.cookies[@remember_me_cookie]
       assert %{max_age: 0} = conn.resp_cookies[@remember_me_cookie]
       assert redirected_to(conn) == "/"
-      refute Users.get_user_by_session_token(user_token)
+      refute Yemma.get_user_by_session_token(user_token)
     end
 
     test "does not broadcast if pubsub_server is not configured", %{conn: conn} do
@@ -150,7 +149,7 @@ defmodule YemmaWeb.UserAuthTest do
     test "authenticates user from session", %{conn: conn, user: user} do
       start_supervised_yemma!()
 
-      user_token = Users.generate_user_session_token(user)
+      user_token = Yemma.generate_user_session_token(user)
       conn = conn |> put_session(:user_token, user_token) |> Yemma.fetch_current_user([])
       assert conn.assigns.current_user.id == user.id
     end
@@ -191,7 +190,7 @@ defmodule YemmaWeb.UserAuthTest do
     test "does not authenticate if data is missing", %{conn: conn, user: user} do
       start_supervised_yemma!()
 
-      _ = Users.generate_user_session_token(user)
+      _ = Yemma.generate_user_session_token(user)
       conn = Yemma.fetch_current_user(conn, [])
       refute get_session(conn, :user_token)
       refute conn.assigns.current_user
