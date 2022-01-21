@@ -1,10 +1,8 @@
 defmodule YemmaWeb.UserConfirmationController do
   use YemmaWeb, :controller
 
-  alias Yemma.Users
-
-  def edit(conn, %{"token" => token}) do
-    case Users.confirm_user(token) do
+  def edit(conn, %{"token" => token}, name) do
+    case Yemma.confirm_user(name, token) do
       {:ok, user} ->
         conn
         |> Yemma.log_in_user(user)
