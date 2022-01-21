@@ -30,7 +30,6 @@ defmodule YemmaWeb.UserSettingsControllerTest do
         })
 
       assert redirected_to(conn) == conf.routes.user_settings_path(conn, :edit)
-      assert get_flash(conn, :info) =~ "A link to confirm your email"
       assert Users.get_user_by_email(conf, user.email)
     end
 

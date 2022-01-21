@@ -23,10 +23,6 @@ defmodule YemmaWeb.UserSettingsController do
         )
 
         conn
-        |> put_flash(
-          :info,
-          "A link to confirm your email change has been sent to the new address."
-        )
         |> redirect(to: yemma.routes.user_settings_path(conn, :edit))
 
       {:error, changeset} ->
