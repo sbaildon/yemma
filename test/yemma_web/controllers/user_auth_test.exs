@@ -111,8 +111,21 @@ defmodule YemmaWeb.UserAuthTest do
       refute Users.get_user_by_session_token(user_token)
     end
 
-    test "broadcasts to the given live_socket_id", %{conn: conn} do
+    test "does not broadcast if pubsub_server is not configured", %{conn: conn} do
       start_supervised_yemma!()
+
+      live_socket_id = "users_sessions:abcdef-token"
+      Phoenix.YemmaTest.Endpoint.subscribe(live_socket_id)
+
+      conn
+      |> put_session(:live_socket_id, live_socket_id)
+      |> Yemma.log_out_user()
+
+      refute_received %Phoenix.Socket.Broadcast{event: "disconnect", topic: ^live_socket_id}
+    end
+
+    test "broadcasts to the given live_socket_id", %{conn: conn} do
+      start_supervised_yemma!(pubsub_server: Phoenix.YemmaTest.PubSub)
 
       live_socket_id = "users_sessions:abcdef-token"
       Phoenix.YemmaTest.Endpoint.subscribe(live_socket_id)

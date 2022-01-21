@@ -71,18 +71,15 @@ defmodule YemmaWeb.UserAuth do
 
   It clears all session data for safety. See renew_session.
   """
-  def log_out_user(%Config{} = _conf, conn) do
+  def log_out_user(%Config{} = conf, conn) do
     user_token = get_session(conn, :user_token)
     user_token && Users.delete_session_token(user_token)
 
     if live_socket_id = get_session(conn, :live_socket_id) do
-      pubsub = Application.get_env(:yemma, :pubsub_server)
+      pubsub = conf.pubsub_server
 
       pubsub &&
-        Phoenix.PubSub.broadcast(pubsub, live_socket_id, %Phoenix.Socket.Broadcast{
-          event: "disconnect",
-          topic: live_socket_id
-        })
+        Phoenix.Channel.Server.broadcast(pubsub, live_socket_id, "disconnect", %{})
     end
 
     conn
