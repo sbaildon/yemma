@@ -188,6 +188,12 @@ defmodule YemmaWeb.UserAuth do
     end
   end
 
+  def put_private(%Config{} = conf, conn) do
+    conn
+    |> Plug.Conn.put_private(:yemma_name, conf.name)
+    |> Plug.Conn.put_private(:yemma_routes, conf.routes)
+  end
+
   defp maybe_forward_return_to(%{method: "GET"} = conn) do
     %{"return_to" => request_url(conn)}
   end

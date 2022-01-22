@@ -45,15 +45,18 @@ defmodule Phoenix.YemmaTest.Router do
       redirect_if_user_is_authenticated: 2,
       require_authenticated_user: 2,
       fetch_current_user: 2,
-      put_name_in_conn: 2
+      put_conn_config: 2
     ]
 
   pipeline :browser do
     plug :fetch_session
     plug :fetch_flash
     plug :fetch_query_params
-    plug :put_name_in_conn
     plug :fetch_current_user
+  end
+
+  pipeline :yemma do
+    plug :put_conn_config
   end
 
   scope "/", Phoenix.YemmaTest do
@@ -63,14 +66,14 @@ defmodule Phoenix.YemmaTest.Router do
   end
 
   scope "/", YemmaWeb do
-    pipe_through [:browser, :redirect_if_user_is_authenticated]
+    pipe_through [:yemma, :browser, :redirect_if_user_is_authenticated]
 
     get "/sign_in", UserSessionController, :new
     post "/sign_in", UserSessionController, :create
   end
 
   scope "/", YemmaWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:yemma, :browser, :require_authenticated_user]
 
     get "/settings", UserSettingsController, :edit
     put "/settings", UserSettingsController, :update
@@ -78,7 +81,7 @@ defmodule Phoenix.YemmaTest.Router do
   end
 
   scope "/", YemmaWeb do
-    pipe_through [:browser]
+    pipe_through [:yemma, :browser]
 
     delete "/log_out", UserSessionController, :delete
     get "/confirm/:token", UserConfirmationController, :edit

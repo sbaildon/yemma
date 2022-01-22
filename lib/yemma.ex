@@ -157,13 +157,11 @@ defmodule Yemma do
     name |> config() |> Users.confirm_user(token)
   end
 
-  def put_name_in_conn(conn, opts) do
+  def put_conn_config(conn, opts) do
     conf =
       Keyword.get(opts, :name, __MODULE__)
       |> config()
 
-    conn
-    |> Plug.Conn.put_private(:yemma_name, conf.name)
-    |> Plug.Conn.put_private(:yemma_routes, conf.routes)
+    UserAuth.put_private(conf, conn)
   end
 end
