@@ -10,15 +10,11 @@ defmodule Yemma.Mail.ObanDispatcher do
   @impl MailDispatcher
   def deliver_magic_link_instructions(%Config{} = conf, %User{} = recipient, link) do
     job =
-      Yemma.Mail.ObanDispatcher.new(
-        %{
-          user_id: recipient.id,
-          link: link
-        },
-        meta: %{
-          yemma: conf.name
-        }
-      )
+      %{
+        user_id: recipient.id,
+        magic_link: link
+      }
+      |> Oban.Job.new(worker: __MODULE__, queue: :mailers, meta: %{yemma: conf.name})
 
     Oban.insert(conf.oban, job)
   end
@@ -27,7 +23,7 @@ defmodule Yemma.Mail.ObanDispatcher do
   def perform(%Job{args: %{"user_id" => user_id, "magic_link" => link}, meta: %{"yemma" => name}}) do
     with conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id) do
-      conf.mail_builder.create_magic_link_email(conf, user, link)
+      conf.mail_builder.create_magic_link_email(user, link)
       |> Mailer.deliver()
     end
   end

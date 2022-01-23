@@ -20,12 +20,14 @@ defmodule Yemma.ObanDispatcherTest do
     test "enqueues a job", %{conf: conf, user: user} do
       token_link = "https://example.com"
 
-      Dispatcher.deliver_magic_link_instructions(conf, user, token_link)
+      {:ok, %{id: id}} = Dispatcher.deliver_magic_link_instructions(conf, user, token_link)
 
-      assert_enqueued(
-        worker: Yemma.Mail.ObanDispatcher,
-        args: %{"user_id" => user.id, "link" => token_link}
-      )
+      assert {:ok, _} =
+               perform_job(
+                 Yemma.Mail.ObanDispatcher,
+                 %{"user_id" => user.id, "magic_link" => token_link},
+                 meta: %{"yemma" => conf.name}
+               )
     end
   end
 end
