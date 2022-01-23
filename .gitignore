@@ -35,4 +35,4 @@ npm-debug.log
 # Database files
 *.db
 *.db-*
-
+.nix/
