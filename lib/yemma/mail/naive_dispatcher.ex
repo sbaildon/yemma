@@ -5,6 +5,8 @@ defmodule Yemma.Mail.NaiveDispatcher do
   alias Yemma.Mail.Dispatcher, as: MailDispatcher
 
   @behaviour MailDispatcher
+
+  @impl MailDispatcher
   def deliver_magic_link_instructions(%Config{} = conf, %User{} = recipient, link) do
     MailBuilder.create_magic_link_email(conf, recipient, link)
     |> deliver()
