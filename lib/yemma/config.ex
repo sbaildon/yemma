@@ -6,7 +6,9 @@ defmodule Yemma.Config do
           pubsub_server: module(),
           secret_key_base: String.t(),
           repo: nil,
-          name: term()
+          name: term(),
+          mail_dispatcher: module(),
+          mail_builder: module()
         }
 
   @enforce_keys [:routes, :secret_key_base, :repo]
@@ -16,7 +18,9 @@ defmodule Yemma.Config do
             pubsub_server: nil,
             secret_key_base: nil,
             repo: nil,
-            name: Yemma
+            name: Yemma,
+            mail_dispatcher: Yemma.Mail.NaiveDispatcher,
+            mail_builder: Yemma.Mail.UnbrandedBuilder
 
   @spec new(Keyword.t()) :: t()
   def new(opts) when is_list(opts) do
@@ -61,6 +65,25 @@ defmodule Yemma.Config do
     do: validate_opt!(:atom, repo, ":repo must be an atom, eg. MyApp.Repo")
 
   defp validate_opt!({:name, _}), do: :ok
+
+  defp validate_opt!({:mailer, mailer}),
+    do: validate_opt!(:atom, mailer, ":mailer must be an atom, eg. MyApp.UserNotifier")
+
+  defp validate_opt!({:mail_dispatcher, mail_dispatcher}) do
+    validate_opt!(
+      :atom,
+      mail_dispatcher,
+      ":mail_dispatcher must be an atom, eg. Yemma.Mail.NaiveDispatcher"
+    )
+  end
+
+  defp validate_opt!({:mail_builder, mail_builder}) do
+    validate_opt!(
+      :atom,
+      mail_builder,
+      ":mail_builder must be an atom, eg. Yemma.Mail.UnbrandedBuilder"
+    )
+  end
 
   defp validate_opt!(:binary, opt, message) do
     unless is_binary(opt) do
