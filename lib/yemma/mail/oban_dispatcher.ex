@@ -2,13 +2,12 @@ defmodule Yemma.Mail.ObanDispatcher do
   use Oban.Worker, queue: :mailers
   alias Oban.Job
   alias Yemma.{Mailer, Config}
-  alias Yemma.Users.User
   alias Yemma.Mail.Dispatcher, as: MailDispatcher
 
   @behaviour MailDispatcher
 
   @impl MailDispatcher
-  def deliver_magic_link_instructions(%Config{} = conf, %User{} = recipient, link) do
+  def deliver_magic_link_instructions(%Config{} = conf, recipient, link) do
     job =
       %{
         user_id: recipient.id,

@@ -17,6 +17,7 @@ defmodule Yemma.Case do
     |> Keyword.put_new(:routes, Phoenix.YemmaTest.Router.Helpers)
     |> Keyword.put_new(:secret_key_base, random_string(64))
     |> Keyword.put_new(:repo, YemmaTest.Repo)
+    |> Keyword.put_new(:user, Phoenix.YemmaTest.User)
   end
 
   def yemma_config(), do: yemma_opts() |> Config.new()

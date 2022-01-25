@@ -13,7 +13,7 @@ defmodule Yemma.Users.UserToken do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
-    belongs_to :user, Yemma.Users.User
+    belongs_to :user, Phoenix.YemmaTest.User
 
     timestamps(updated_at: false)
   end

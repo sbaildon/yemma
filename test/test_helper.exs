@@ -10,6 +10,10 @@ Application.put_env(:yemma, Phoenix.YemmaTest.Endpoint,
 YemmaTest.Repo.start_link()
 Ecto.Adapters.SQL.Sandbox.mode(YemmaTest.Repo, :manual)
 
+defmodule Phoenix.YemmaTest.User do
+  use Yemma.Users.User
+end
+
 defmodule Phoenix.YemmaTest.ErrorView do
   use Phoenix.View, root: "test/templates"
 

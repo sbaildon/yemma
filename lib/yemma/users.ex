@@ -5,7 +5,7 @@ defmodule Yemma.Users do
 
   import Ecto.Query, warn: false
 
-  alias Yemma.Users.{User, UserToken, UserNotifier}
+  alias Yemma.Users.{UserToken, UserNotifier}
   alias Yemma.Config
   alias Yemma.Mail.Dispatcher, as: MailDispatcher
 
@@ -24,7 +24,7 @@ defmodule Yemma.Users do
 
   """
   def get_user_by_email(%Config{} = conf, email) when is_binary(email) do
-    conf.repo.get_by(User, email: email)
+    conf.repo.get_by(conf.user, email: email)
   end
 
   @doc """
@@ -41,7 +41,7 @@ defmodule Yemma.Users do
       ** (Ecto.NoResultsError)
 
   """
-  def get_user!(%Config{} = conf, id), do: conf.repo.get!(User, id)
+  def get_user!(%Config{} = conf, id), do: conf.repo.get!(conf.user, id)
 
   ## User registration
 
@@ -58,8 +58,8 @@ defmodule Yemma.Users do
 
   """
   def register_user(%Config{} = conf, attrs) do
-    %User{}
-    |> User.registration_changeset(attrs)
+    struct(conf.user)
+    |> conf.user.registration_changeset(attrs)
     |> conf.repo.insert()
   end
 
@@ -77,8 +77,8 @@ defmodule Yemma.Users do
       %Ecto.Changeset{data: %User{}}
 
   """
-  def change_user_registration(%User{} = user, attrs \\ %{}) do
-    User.registration_changeset(user, attrs)
+  def change_user_registration(user, attrs \\ %{}) do
+    user.__struct__.registration_changeset(user, attrs)
   end
 
   ## Settings
@@ -93,7 +93,7 @@ defmodule Yemma.Users do
 
   """
   def change_user_email(user, attrs \\ %{}) do
-    User.email_changeset(user, attrs)
+    user.__struct__.email_changeset(user, attrs)
   end
 
   @doc """
@@ -111,7 +111,7 @@ defmodule Yemma.Users do
   """
   def apply_user_email(user, attrs) do
     user
-    |> User.email_changeset(attrs)
+    |> user.__struct__.email_changeset(attrs)
     |> Ecto.Changeset.apply_action(:update)
   end
 
@@ -136,8 +136,8 @@ defmodule Yemma.Users do
   defp user_email_multi(user, email, context) do
     changeset =
       user
-      |> User.email_changeset(%{email: email})
-      |> User.confirm_changeset()
+      |> user.__struct__.email_changeset(%{email: email})
+      |> user.__struct__.confirm_changeset()
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
@@ -155,7 +155,7 @@ defmodule Yemma.Users do
   """
   def deliver_update_email_instructions(
         %Config{} = conf,
-        %User{} = user,
+        user,
         current_email,
         update_email_url_fun
       )
@@ -209,7 +209,7 @@ defmodule Yemma.Users do
   """
   def deliver_user_confirmation_instructions(
         %Config{} = conf,
-        %User{} = user,
+        user,
         confirmation_url_fun
       )
       when is_function(confirmation_url_fun, 1) do
@@ -230,7 +230,7 @@ defmodule Yemma.Users do
       iex> deliver_magic_link_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
       {:ok, %{to: ..., body: ...}}
   """
-  def deliver_magic_link_instructions(%Config{} = conf, %User{} = user, confirmation_url_fun)
+  def deliver_magic_link_instructions(%Config{} = conf, user, confirmation_url_fun)
       when is_function(confirmation_url_fun, 1) do
     {encoded_token, user_token} = UserToken.build_email_token(user, "magic")
     conf.repo.insert!(user_token)
@@ -261,7 +261,7 @@ defmodule Yemma.Users do
 
   defp confirm_user_multi(user, token) do
     Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, User.confirm_changeset(user))
+    |> Ecto.Multi.update(:user, user.__struct__.confirm_changeset(user))
     |> Ecto.Multi.delete(:token, token)
   end
 end

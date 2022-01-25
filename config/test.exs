@@ -10,7 +10,8 @@ config :yemma,
   repo: YemmaTest.Repo,
   ecto_repos: [YemmaTest.Repo],
   pubsub_server: Phoenix.YemmaTest.PubSub,
-  secret_key_base: "KGZHtZ5nYiaNleW9fCWoCjnAfRHY7gTl7S2+pzLKIN0paXk0Syv3826nJqdR/uiD"
+  secret_key_base: "KGZHtZ5nYiaNleW9fCWoCjnAfRHY7gTl7S2+pzLKIN0paXk0Syv3826nJqdR/uiD",
+  user: Phoenix.YemmaTest.User
 
 # In test we don't send emails.
 config :yemma, Yemma.Mailer, adapter: Swoosh.Adapters.Test

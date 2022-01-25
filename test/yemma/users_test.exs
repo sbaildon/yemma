@@ -4,7 +4,7 @@ defmodule Yemma.UsersTest do
   alias Yemma.Users
 
   import Yemma.UsersFixtures
-  alias Yemma.Users.{User, UserToken}
+  alias Yemma.Users.{UserToken}
 
   setup do
     %{conf: yemma_config()}
@@ -17,7 +17,7 @@ defmodule Yemma.UsersTest do
 
     test "returns the user if the email exists", %{conf: conf} do
       %{id: id} = user = user_fixture(conf)
-      assert %User{id: ^id} = Users.get_user_by_email(conf, user.email)
+      assert %_{id: ^id} = Users.get_user_by_email(conf, user.email)
     end
   end
 
@@ -30,7 +30,7 @@ defmodule Yemma.UsersTest do
 
     test "returns the user with the given id", %{conf: conf} do
       %{id: id} = user = user_fixture(conf)
-      assert %User{id: ^id} = Users.get_user!(conf, user.id)
+      assert %_{id: ^id} = Users.get_user!(conf, user.id)
     end
   end
 
@@ -92,17 +92,17 @@ defmodule Yemma.UsersTest do
   end
 
   describe "change_user_registration/2" do
-    test "returns a changeset" do
-      assert %Ecto.Changeset{} = changeset = Users.change_user_registration(%User{})
+    test "returns a changeset", %{conf: conf} do
+      assert %Ecto.Changeset{} = changeset = Users.change_user_registration(struct(conf.user))
       assert changeset.required == [:email]
     end
 
-    test "allows fields to be set" do
+    test "allows fields to be set", %{conf: conf} do
       email = unique_user_email()
 
       changeset =
         Users.change_user_registration(
-          %User{},
+          struct(conf.user),
           valid_user_attributes(email: email)
         )
 
@@ -112,8 +112,8 @@ defmodule Yemma.UsersTest do
   end
 
   describe "change_user_email/2" do
-    test "returns a user changeset" do
-      assert %Ecto.Changeset{} = changeset = Users.change_user_email(%User{})
+    test "returns a user changeset", %{conf: conf} do
+      assert %Ecto.Changeset{} = changeset = Users.change_user_email(struct(conf.user))
       assert changeset.required == [:email]
     end
   end
@@ -189,7 +189,7 @@ defmodule Yemma.UsersTest do
       conf: conf
     } do
       assert Users.update_user_email(conf, user, token) == :ok
-      changed_user = Repo.get!(User, user.id)
+      changed_user = Repo.get!(conf.user, user.id)
       assert changed_user.email != user.email
       assert changed_user.email == email
       assert changed_user.confirmed_at
@@ -199,7 +199,7 @@ defmodule Yemma.UsersTest do
 
     test "does not update email with invalid token", %{user: user, conf: conf} do
       assert Users.update_user_email(conf, user, "oops") == :error
-      assert Repo.get!(User, user.id).email == user.email
+      assert Repo.get!(conf.user, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
@@ -207,14 +207,14 @@ defmodule Yemma.UsersTest do
       assert Users.update_user_email(conf, %{user | email: "current@example.com"}, token) ==
                :error
 
-      assert Repo.get!(User, user.id).email == user.email
+      assert Repo.get!(conf.user, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not update email if token expired", %{user: user, token: token, conf: conf} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       assert Users.update_user_email(conf, user, token) == :error
-      assert Repo.get!(User, user.id).email == user.email
+      assert Repo.get!(conf.user, user.id).email == user.email
       assert Repo.get_by(UserToken, user_id: user.id)
     end
   end
@@ -325,20 +325,20 @@ defmodule Yemma.UsersTest do
       assert {:ok, confirmed_user} = Users.confirm_user(conf, token)
       assert confirmed_user.confirmed_at
       assert confirmed_user.confirmed_at != user.confirmed_at
-      assert Repo.get!(User, user.id).confirmed_at
+      assert Repo.get!(conf.user, user.id).confirmed_at
       refute Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not confirm with invalid token", %{user: user, conf: conf} do
       assert Users.confirm_user(conf, "oops") == :error
-      refute Repo.get!(User, user.id).confirmed_at
+      refute Repo.get!(conf.user, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end
 
     test "does not confirm email if token expired", %{user: user, token: token, conf: conf} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       assert Users.confirm_user(conf, token) == :error
-      refute Repo.get!(User, user.id).confirmed_at
+      refute Repo.get!(conf.user, user.id).confirmed_at
       assert Repo.get_by(UserToken, user_id: user.id)
     end
   end
