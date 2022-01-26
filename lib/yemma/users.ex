@@ -59,7 +59,7 @@ defmodule Yemma.Users do
   """
   def register_user(%Config{} = conf, attrs) do
     struct(conf.user)
-    |> conf.user.registration_changeset(attrs)
+    |> Yemma.Users.User.registration_changeset(attrs)
     |> conf.repo.insert()
   end
 
@@ -78,7 +78,7 @@ defmodule Yemma.Users do
 
   """
   def change_user_registration(user, attrs \\ %{}) do
-    user.__struct__.registration_changeset(user, attrs)
+    Yemma.Users.User.registration_changeset(user, attrs)
   end
 
   ## Settings
@@ -93,7 +93,7 @@ defmodule Yemma.Users do
 
   """
   def change_user_email(user, attrs \\ %{}) do
-    user.__struct__.email_changeset(user, attrs)
+    Yemma.Users.User.email_changeset(user, attrs)
   end
 
   @doc """
@@ -111,7 +111,7 @@ defmodule Yemma.Users do
   """
   def apply_user_email(user, attrs) do
     user
-    |> user.__struct__.email_changeset(attrs)
+    |> Yemma.Users.User.email_changeset(attrs)
     |> Ecto.Changeset.apply_action(:update)
   end
 
@@ -136,8 +136,8 @@ defmodule Yemma.Users do
   defp user_email_multi(user, email, context) do
     changeset =
       user
-      |> user.__struct__.email_changeset(%{email: email})
-      |> user.__struct__.confirm_changeset()
+      |> Yemma.Users.User.email_changeset(%{email: email})
+      |> Yemma.Users.User.confirm_changeset()
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
@@ -181,7 +181,7 @@ defmodule Yemma.Users do
   Gets the user with the given signed token.
   """
   def get_user_by_session_token(%Config{} = conf, token) do
-    {:ok, query} = UserToken.verify_session_token_query(token)
+    {:ok, query} = UserToken.verify_session_token_query(conf, token)
     conf.repo.one(query)
   end
 
@@ -249,10 +249,10 @@ defmodule Yemma.Users do
   and the token is deleted.
   """
   def confirm_user(%Config{} = conf, token) do
-    with {:ok, query} <- UserToken.verify_email_token_query(token, "magic"),
-         %UserToken{user: %{id: _}} = user_token <- conf.repo.one(query),
+    with {:ok, query} <- UserToken.verify_email_token_query(conf, token, "magic"),
+         {%UserToken{} = user_token, user} <- conf.repo.one(query),
          {:ok, %{user: user}} <-
-           conf.repo.transaction(confirm_user_multi(user_token.user, user_token)) do
+           conf.repo.transaction(confirm_user_multi(user, user_token)) do
       {:ok, user}
     else
       _ -> :error
@@ -261,7 +261,7 @@ defmodule Yemma.Users do
 
   defp confirm_user_multi(user, token) do
     Ecto.Multi.new()
-    |> Ecto.Multi.update(:user, user.__struct__.confirm_changeset(user))
+    |> Ecto.Multi.update(:user, Yemma.Users.User.confirm_changeset(user))
     |> Ecto.Multi.delete(:token, token)
   end
 end

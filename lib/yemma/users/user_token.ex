@@ -13,7 +13,7 @@ defmodule Yemma.Users.UserToken do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
-    belongs_to :user, Phoenix.YemmaTest.User
+    field :user_id, :id
 
     timestamps(updated_at: false)
   end
@@ -50,12 +50,13 @@ defmodule Yemma.Users.UserToken do
   The token is valid if it matches the value in the database and it has
   not expired (after @session_validity_in_days).
   """
-  def verify_session_token_query(token) do
+  def verify_session_token_query(conf, token) do
     {duration, unit} = validity_for_context("session")
 
     query =
       from token in token_and_context_query(token, "session"),
-        join: user in assoc(token, :user),
+        join: user in ^conf.user,
+        on: user.id == token.user_id,
         where: token.inserted_at > ago(^duration, ^unit),
         select: user
 
@@ -95,7 +96,7 @@ defmodule Yemma.Users.UserToken do
   @doc """
   Checks if the token is valid and returns its underlying lookup query.
 
-  The query returns the user found by the token, if any.
+  The query returns the token found by the token, if any.
 
   The given token is valid if it matches its hashed counterpart in the
   database and the user email has not changed. This function also checks
@@ -104,7 +105,7 @@ defmodule Yemma.Users.UserToken do
   "confirm", for account confirmation emails . For verifying requests
   to change the email, see `verify_change_email_token_query/2`.
   """
-  def verify_email_token_query(token, context) do
+  def verify_email_token_query(conf, token, context) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
@@ -112,9 +113,10 @@ defmodule Yemma.Users.UserToken do
 
         query =
           from token in token_and_context_query(hashed_token, context),
-            join: user in assoc(token, :user),
+            join: user in ^conf.user,
+            on: user.id == token.user_id,
             where: token.inserted_at > ago(^duration, ^unit) and token.sent_to == user.email,
-            preload: [:user]
+            select: {token, user}
 
         {:ok, query}
 

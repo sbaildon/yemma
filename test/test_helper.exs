@@ -11,6 +11,7 @@ YemmaTest.Repo.start_link()
 Ecto.Adapters.SQL.Sandbox.mode(YemmaTest.Repo, :manual)
 
 defmodule Phoenix.YemmaTest.User do
+  use Ecto.Schema
   use Yemma.Users.User
 end
 
