@@ -10,7 +10,6 @@ defmodule YemmaWeb.UserAuth do
   # the token expiry itself in UserToken.
   @max_age 60 * 60 * 24 * 60
   @remember_me_cookie "_yemma_web_user_remember_me"
-  @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
 
   @doc """
   Logs the user in.
@@ -37,12 +36,15 @@ defmodule YemmaWeb.UserAuth do
         conn,
         @remember_me_cookie,
         token,
-        @remember_me_options ++ [domain: cookie_domain(conf, conn)]
+        remember_me_options(conf, conn)
       )
     end)
     |> redirect(external: user_return_to || signed_in_path(conf))
   end
 
+  defp remember_me_options(conf, conn) do
+    [sign: true, max_age: @max_age, same_site: "Lax", domain: cookie_domain(conf, conn)]
+  end
   defp cookie_domain(conf, conn), do: conf.cookie_domain || conn.host()
 
   # This function renews the session ID and erases the whole
