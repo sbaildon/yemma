@@ -12,7 +12,9 @@ defmodule Yemma.ObanDispatcherTest do
 
   setup do
     start_supervised!({Oban, name: @name, repo: @repo, queues: [mailers: 10]})
-    conf = start_supervised_yemma!(oban: @name, mail_dispatcher: Yemma.Mail.ObanDispatcher)
+
+    conf = start_supervised_yemma!(mail_dispatcher: {Yemma.Mail.ObanDispatcher, oban: @name})
+
     %{conf: conf, user: user_fixture(conf)}
   end
 

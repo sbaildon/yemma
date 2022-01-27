@@ -9,7 +9,6 @@ defmodule Yemma.Config do
           name: term(),
           mail_dispatcher: module(),
           mail_builder: module(),
-          oban: module(),
           user: module(),
           token: module(),
           endpoint: module(),
@@ -26,7 +25,6 @@ defmodule Yemma.Config do
             name: Yemma,
             mail_dispatcher: Yemma.Mail.NaiveDispatcher,
             mail_builder: Yemma.Mail.UnbrandedBuilder,
-            oban: nil,
             user: nil,
             token: nil,
             endpoint: nil,
@@ -65,11 +63,21 @@ defmodule Yemma.Config do
 
   defp validate_opt!({:name, _}), do: :ok
 
+  defp validate_opt!({:mail_dispatcher, {dispatcher, opts}}) do
+    validate_opt!(
+      :atom,
+      dispatcher,
+      ":mail_dispatcher must be an atom or {atom, list} tuple, eg. Yemma.Mail.NaiveDispatcher"
+    )
+
+    validate_opt!(:list, opts, ":mail_dispatcher opts must be a list")
+  end
+
   defp validate_opt!({:mail_dispatcher, mail_dispatcher}) do
     validate_opt!(
       :atom,
       mail_dispatcher,
-      ":mail_dispatcher must be an atom, eg. Yemma.Mail.NaiveDispatcher"
+      ":mail_dispatcher must be an atom or {atom, list} tuple, eg. Yemma.Mail.NaiveDispatcher"
     )
   end
 
@@ -79,10 +87,6 @@ defmodule Yemma.Config do
       mail_builder,
       ":mail_builder must be an atom, eg. Yemma.Mail.UnbrandedBuilder"
     )
-  end
-
-  defp validate_opt!({:oban, oban}) do
-    validate_opt!(:atom, oban, ":oban must be an atom, eg. MyApp.Oban")
   end
 
   defp validate_opt!({:user, user}) do
@@ -109,6 +113,12 @@ defmodule Yemma.Config do
 
   defp validate_opt!(:atom, opt, message) do
     unless is_atom(opt) do
+      raise(ArgumentError, message)
+    end
+  end
+
+  defp validate_opt!(:list, opt, message) do
+    unless is_list(opt) do
       raise(ArgumentError, message)
     end
   end

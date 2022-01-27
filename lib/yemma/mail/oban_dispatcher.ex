@@ -7,7 +7,7 @@ defmodule Yemma.Mail.ObanDispatcher do
   @behaviour MailDispatcher
 
   @impl MailDispatcher
-  def deliver_magic_link_instructions(%Config{} = conf, recipient, link) do
+  def deliver_magic_link_instructions(%Config{} = conf, recipient, link, opts) do
     job =
       %{
         user_id: recipient.id,
@@ -15,11 +15,11 @@ defmodule Yemma.Mail.ObanDispatcher do
       }
       |> Oban.Job.new(worker: __MODULE__, queue: :mailers, meta: %{yemma: conf.name})
 
-    Oban.insert(conf.oban, job)
+    Oban.insert(opts[:oban], job)
   end
 
   @impl MailDispatcher
-  def deliver_update_email_instructions(%Config{} = conf, recipient, link) do
+  def deliver_update_email_instructions(%Config{} = conf, recipient, link, opts) do
     job =
       %{
         user_id: recipient.id,
@@ -27,7 +27,7 @@ defmodule Yemma.Mail.ObanDispatcher do
       }
       |> Oban.Job.new(worker: __MODULE__, queue: :mailers, meta: %{yemma: conf.name})
 
-    Oban.insert(conf.oban, job)
+    Oban.insert(opts[:oban], job)
   end
 
   @impl Oban.Worker
