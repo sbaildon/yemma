@@ -38,7 +38,7 @@ defmodule Yemma.Config do
     struct!(__MODULE__, opts)
   end
 
-  defp validate_opt!({:routes, routes}) do
+  defp validate_opt!({:routes, routes}),
     do: validate_opt!(:atom, routes, ":repo must be an atom, eg. MyAppWeb.Routes.Helpers")
 
   defp validate_opt!({:signed_in_dest, {m, f, a}}) when is_list(a) do
@@ -64,9 +64,6 @@ defmodule Yemma.Config do
     do: validate_opt!(:atom, repo, ":repo must be an atom, eg. MyApp.Repo")
 
   defp validate_opt!({:name, _}), do: :ok
-
-  defp validate_opt!({:mailer, mailer}),
-    do: validate_opt!(:atom, mailer, ":mailer must be an atom, eg. MyApp.UserNotifier")
 
   defp validate_opt!({:mail_dispatcher, mail_dispatcher}) do
     validate_opt!(

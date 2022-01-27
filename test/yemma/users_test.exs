@@ -4,7 +4,6 @@ defmodule Yemma.UsersTest do
   alias Yemma.Users
 
   import Yemma.UsersFixtures
-  alias Yemma.Users.{UserToken}
 
   setup do
     %{conf: yemma_config()}
