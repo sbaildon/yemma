@@ -11,7 +11,9 @@ defmodule Yemma.Config do
           mail_builder: module(),
           oban: module(),
           user: module(),
-          token: module()
+          token: module(),
+          endpoint: module(),
+          mailer: module()
         }
 
   @enforce_keys [:routes, :secret_key_base, :repo]
@@ -26,7 +28,9 @@ defmodule Yemma.Config do
             mail_builder: Yemma.Mail.UnbrandedBuilder,
             oban: nil,
             user: nil,
-            token: nil
+            token: nil,
+            endpoint: nil,
+            mailer: Yemma.Mailer
 
   @spec new(Keyword.t()) :: t()
   def new(opts) when is_list(opts) do
@@ -35,7 +39,7 @@ defmodule Yemma.Config do
   end
 
   defp validate_opt!({:routes, routes}) do
-    required_functions = [user_session_url: 2, user_settings_url: 2, user_confirmation_url: 3]
+    required_functions = [user_session_url: 3, user_settings_url: 3, user_confirmation_url: 4]
 
     unexported =
       Enum.reject(required_functions, fn {func, arity} ->
@@ -99,8 +103,16 @@ defmodule Yemma.Config do
     validate_opt!(:atom, user, ":user must be an atom, eg. Yemma.Users.User")
   end
 
-  defp validate_opt!({:token, user}) do
-    validate_opt!(:atom, user, ":token must be an atom, eg. Yemma.Users.UserToken")
+  defp validate_opt!({:token, token}) do
+    validate_opt!(:atom, token, ":token must be an atom, eg. Yemma.Users.UserToken")
+  end
+
+  defp validate_opt!({:endpoint, endpoint}) do
+    validate_opt!(:atom, endpoint, ":endpoint must be an atom, eg. MyAppWeb.Endpoint")
+  end
+
+  defp validate_opt!({:mailer, mailer}) do
+    validate_opt!(:atom, mailer, ":mailer must be an atom, eg. MyAppMailer")
   end
 
   defp validate_opt!(:binary, opt, message) do

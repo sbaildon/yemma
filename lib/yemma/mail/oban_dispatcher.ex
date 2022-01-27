@@ -1,7 +1,7 @@
 defmodule Yemma.Mail.ObanDispatcher do
   use Oban.Worker, queue: :mailers
   alias Oban.Job
-  alias Yemma.{Mailer, Config}
+  alias Yemma.{Config}
   alias Yemma.Mail.Dispatcher, as: MailDispatcher
 
   @behaviour MailDispatcher
@@ -23,7 +23,7 @@ defmodule Yemma.Mail.ObanDispatcher do
     with conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id) do
       conf.mail_builder.create_magic_link_email(user, link)
-      |> Mailer.deliver()
+      |> conf.mailer.deliver()
     end
   end
 end
