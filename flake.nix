@@ -38,6 +38,10 @@
 					createuser postgres --createdb -h localhost
 					pg_ctl stop
 				fi
+
+				if [ -f ./env ]; then
+				    set -a; source ./env; set +a
+				fi
 			'';
 
 		};
