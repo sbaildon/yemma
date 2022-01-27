@@ -164,4 +164,10 @@ defmodule Yemma do
 
     UserAuth.put_private(conf, conn)
   end
+
+  def sign_out_url(name \\ __MODULE__) do
+    conf = name |> config()
+
+    conf.routes.user_session_url(conf.endpoint, :delete)
+  end
 end
