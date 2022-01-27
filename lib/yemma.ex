@@ -133,16 +133,6 @@ defmodule Yemma do
     name |> config() |> Users.delete_session_token(token)
   end
 
-  def deliver_user_confirmation_instructions(
-        name \\ __MODULE__,
-        user,
-        confirmation_email_url_fun
-      ) do
-    name
-    |> config()
-    |> Users.deliver_user_confirmation_instructions(user, confirmation_email_url_fun)
-  end
-
   def deliver_magic_link_instructions(
         name \\ __MODULE__,
         user,

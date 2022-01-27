@@ -5,7 +5,7 @@ defmodule Yemma.Users do
 
   import Ecto.Query, warn: false
 
-  alias Yemma.Users.{UserToken, UserNotifier}
+  alias Yemma.Users.UserToken
   alias Yemma.Config
   alias Yemma.Mail.Dispatcher, as: MailDispatcher
 
@@ -197,35 +197,6 @@ defmodule Yemma.Users do
   def delete_session_token(%Config{} = conf, token) do
     conf.repo.delete_all(UserToken.token_and_context_query(conf, token, "session"))
     :ok
-  end
-
-  ## Confirmation
-
-  @doc """
-  Delivers the confirmation email instructions to the given user.
-
-  ## Examples
-
-      iex> deliver_user_confirmation_instructions(user, &Routes.user_confirmation_url(conn, :edit, &1))
-      {:ok, %{to: ..., body: ...}}
-
-      iex> deliver_user_confirmation_instructions(confirmed_user, &Routes.user_confirmation_url(conn, :edit, &1))
-      {:error, :already_confirmed}
-
-  """
-  def deliver_user_confirmation_instructions(
-        %Config{} = conf,
-        user,
-        confirmation_url_fun
-      )
-      when is_function(confirmation_url_fun, 1) do
-    if user.confirmed_at do
-      {:error, :already_confirmed}
-    else
-      {encoded_token, user_token} = UserToken.build_email_token(conf, user, "confirm")
-      conf.repo.insert!(user_token)
-      UserNotifier.deliver_confirmation_instructions(user, confirmation_url_fun.(encoded_token))
-    end
   end
 
   @doc """
