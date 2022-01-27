@@ -39,18 +39,7 @@ defmodule Yemma.Config do
   end
 
   defp validate_opt!({:routes, routes}) do
-    required_functions = [user_session_url: 3, user_settings_url: 3, user_confirmation_url: 4]
-
-    unexported =
-      Enum.reject(required_functions, fn {func, arity} ->
-        function_exported?(routes, func, arity)
-      end)
-      |> Enum.map(fn {func, arity} -> "#{func}/#{arity}" end)
-
-    if length(unexported) > 0 do
-      raise ArgumentError, ":routes, #{routes} needs to export: #{Enum.join(unexported, ", ")}"
-    end
-  end
+    do: validate_opt!(:atom, routes, ":repo must be an atom, eg. MyAppWeb.Routes.Helpers")
 
   defp validate_opt!({:signed_in_dest, {m, f, a}}) when is_list(a) do
     arity = length(a)
