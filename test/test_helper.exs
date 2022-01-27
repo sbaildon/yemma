@@ -11,8 +11,14 @@ YemmaTest.Repo.start_link()
 Ecto.Adapters.SQL.Sandbox.mode(YemmaTest.Repo, :manual)
 
 defmodule Phoenix.YemmaTest.User do
-  use Ecto.Schema
-  use Yemma.Users.User
+  use Yemma.Users.User,
+    primary_key: {:id, :string, autogenerate: {Ecto.UUID, :autogenerate, []}}
+end
+
+defmodule Phoenix.YemmaTest.UserToken do
+  use Yemma.Users.UserToken,
+    primary_key: {:id, :string, autogenerate: {Ecto.UUID, :autogenerate, []}},
+    foreign_key_type: :string
 end
 
 defmodule Phoenix.YemmaTest.ErrorView do

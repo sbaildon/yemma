@@ -10,7 +10,8 @@ defmodule Yemma.Config do
           mail_dispatcher: module(),
           mail_builder: module(),
           oban: module(),
-          user: module()
+          user: module(),
+          token: module()
         }
 
   @enforce_keys [:routes, :secret_key_base, :repo]
@@ -24,7 +25,8 @@ defmodule Yemma.Config do
             mail_dispatcher: Yemma.Mail.NaiveDispatcher,
             mail_builder: Yemma.Mail.UnbrandedBuilder,
             oban: nil,
-            user: nil
+            user: nil,
+            token: nil
 
   @spec new(Keyword.t()) :: t()
   def new(opts) when is_list(opts) do
@@ -95,6 +97,10 @@ defmodule Yemma.Config do
 
   defp validate_opt!({:user, user}) do
     validate_opt!(:atom, user, ":user must be an atom, eg. Yemma.Users.User")
+  end
+
+  defp validate_opt!({:token, user}) do
+    validate_opt!(:atom, user, ":token must be an atom, eg. Yemma.Users.UserToken")
   end
 
   defp validate_opt!(:binary, opt, message) do

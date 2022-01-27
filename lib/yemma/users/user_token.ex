@@ -9,13 +9,22 @@ defmodule Yemma.Users.UserToken do
   @change_email_validiity {7, "day"}
   @session_validity {60, "day"}
 
-  schema "users_tokens" do
-    field :token, :binary
-    field :context, :string
-    field :sent_to, :string
-    field :user_id, :id
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      use Ecto.Schema
 
-    timestamps(updated_at: false)
+      @primary_key Keyword.get(opts, :primary_key, nil)
+      @foreign_key_type Keyword.get(opts, :foreign_key_type, :id)
+
+      schema "users_tokens" do
+        field :token, :binary
+        field :context, :string
+        field :sent_to, :string
+        field :user_id, @foreign_key_type
+
+        timestamps(updated_at: false)
+      end
+    end
   end
 
   @doc """
@@ -37,9 +46,9 @@ defmodule Yemma.Users.UserToken do
   and devices in the UI and allow users to explicitly expire any
   session they deem invalid.
   """
-  def build_session_token(user) do
+  def build_session_token(conf, user) do
     token = :crypto.strong_rand_bytes(@rand_size)
-    {token, %Yemma.Users.UserToken{token: token, context: "session", user_id: user.id}}
+    {token, struct!(conf.token, token: token, context: "session", user_id: user.id)}
   end
 
   @doc """
@@ -54,7 +63,7 @@ defmodule Yemma.Users.UserToken do
     {duration, unit} = validity_for_context("session")
 
     query =
-      from token in token_and_context_query(token, "session"),
+      from token in token_and_context_query(conf, token, "session"),
         join: user in ^conf.user,
         on: user.id == token.user_id,
         where: token.inserted_at > ago(^duration, ^unit),
@@ -76,21 +85,21 @@ defmodule Yemma.Users.UserToken do
   Users can easily adapt the existing code to provide other types of delivery methods,
   for example, by phone numbers.
   """
-  def build_email_token(user, context) do
-    build_hashed_token(user, context, user.email)
+  def build_email_token(conf, user, context) do
+    build_hashed_token(conf, user, context, user.email)
   end
 
-  defp build_hashed_token(user, context, sent_to) do
+  defp build_hashed_token(conf, user, context, sent_to) do
     token = :crypto.strong_rand_bytes(@rand_size)
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
     {Base.url_encode64(token, padding: false),
-     %Yemma.Users.UserToken{
+     struct!(conf.token,
        token: hashed_token,
        context: context,
        sent_to: sent_to,
        user_id: user.id
-     }}
+     )}
   end
 
   @doc """
@@ -112,7 +121,7 @@ defmodule Yemma.Users.UserToken do
         {duration, unit} = validity_for_context(context)
 
         query =
-          from token in token_and_context_query(hashed_token, context),
+          from token in token_and_context_query(conf, hashed_token, context),
             join: user in ^conf.user,
             on: user.id == token.user_id,
             where: token.inserted_at > ago(^duration, ^unit) and token.sent_to == user.email,
@@ -143,14 +152,14 @@ defmodule Yemma.Users.UserToken do
   database and if it has not expired (after @change_email_validity_in_days).
   The context must always start with "change:".
   """
-  def verify_change_email_token_query(token, "change:" <> _ = context) do
+  def verify_change_email_token_query(conf, token, "change:" <> _ = context) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
         {duration, unit} = validity_for_context(context)
 
         query =
-          from token in token_and_context_query(hashed_token, context),
+          from token in token_and_context_query(conf, hashed_token, context),
             where: token.inserted_at > ago(^duration, ^unit)
 
         {:ok, query}
@@ -163,18 +172,18 @@ defmodule Yemma.Users.UserToken do
   @doc """
   Returns the token struct for the given token value and context.
   """
-  def token_and_context_query(token, context) do
-    from Yemma.Users.UserToken, where: [token: ^token, context: ^context]
+  def token_and_context_query(conf, token, context) do
+    from conf.token, where: [token: ^token, context: ^context]
   end
 
   @doc """
   Gets all tokens for the given user for the given contexts.
   """
-  def user_and_contexts_query(user, :all) do
-    from t in Yemma.Users.UserToken, where: t.user_id == ^user.id
+  def user_and_contexts_query(conf, user, :all) do
+    from t in conf.token, where: t.user_id == ^user.id
   end
 
-  def user_and_contexts_query(user, [_ | _] = contexts) do
-    from t in Yemma.Users.UserToken, where: t.user_id == ^user.id and t.context in ^contexts
+  def user_and_contexts_query(conf, user, [_ | _] = contexts) do
+    from t in conf.token, where: t.user_id == ^user.id and t.context in ^contexts
   end
 end

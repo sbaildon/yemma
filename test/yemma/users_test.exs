@@ -24,7 +24,13 @@ defmodule Yemma.UsersTest do
   describe "get_user!/1" do
     test "raises if id is invalid", %{conf: conf} do
       assert_raise Ecto.NoResultsError, fn ->
-        Users.get_user!(conf, -1)
+        case conf.user.__schema__(:type, :id) do
+          :string ->
+            Users.get_user!(conf, "does_not_exist")
+
+          :integer ->
+            Users.get_user!(conf, -1)
+        end
       end
     end
 
@@ -162,7 +168,7 @@ defmodule Yemma.UsersTest do
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      assert user_token = Repo.get_by(conf.token, token: :crypto.hash(:sha256, token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "change:current@example.com"
@@ -194,13 +200,13 @@ defmodule Yemma.UsersTest do
       assert changed_user.email == email
       assert changed_user.confirmed_at
       assert changed_user.confirmed_at != user.confirmed_at
-      refute Repo.get_by(UserToken, user_id: user.id)
+      refute Repo.get_by(conf.token, user_id: user.id)
     end
 
     test "does not update email with invalid token", %{user: user, conf: conf} do
       assert Users.update_user_email(conf, user, "oops") == :error
       assert Repo.get!(conf.user, user.id).email == user.email
-      assert Repo.get_by(UserToken, user_id: user.id)
+      assert Repo.get_by(conf.token, user_id: user.id)
     end
 
     test "does not update email if user email changed", %{user: user, token: token, conf: conf} do
@@ -208,14 +214,14 @@ defmodule Yemma.UsersTest do
                :error
 
       assert Repo.get!(conf.user, user.id).email == user.email
-      assert Repo.get_by(UserToken, user_id: user.id)
+      assert Repo.get_by(conf.token, user_id: user.id)
     end
 
     test "does not update email if token expired", %{user: user, token: token, conf: conf} do
-      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      {1, nil} = Repo.update_all(conf.token, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       assert Users.update_user_email(conf, user, token) == :error
       assert Repo.get!(conf.user, user.id).email == user.email
-      assert Repo.get_by(UserToken, user_id: user.id)
+      assert Repo.get_by(conf.token, user_id: user.id)
     end
   end
 
@@ -226,16 +232,18 @@ defmodule Yemma.UsersTest do
 
     test "generates a token", %{user: user, conf: conf} do
       token = Users.generate_user_session_token(conf, user)
-      assert user_token = Repo.get_by(UserToken, token: token)
+      assert user_token = Repo.get_by(conf.token, token: token)
       assert user_token.context == "session"
 
       # Creating the same token for another user should fail
       assert_raise Ecto.ConstraintError, fn ->
-        Repo.insert!(%UserToken{
-          token: user_token.token,
-          user_id: user_fixture(conf).id,
-          context: "session"
-        })
+        Repo.insert!(
+          struct!(conf.token,
+            token: user_token.token,
+            user_id: user_fixture(conf).id,
+            context: "session"
+          )
+        )
       end
     end
   end
@@ -257,7 +265,7 @@ defmodule Yemma.UsersTest do
     end
 
     test "does not return user for expired token", %{token: token, conf: conf} do
-      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      {1, nil} = Repo.update_all(conf.token, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       refute Users.get_user_by_session_token(conf, token)
     end
   end
@@ -283,7 +291,7 @@ defmodule Yemma.UsersTest do
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      assert user_token = Repo.get_by(conf.token, token: :crypto.hash(:sha256, token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "confirm"
@@ -302,7 +310,7 @@ defmodule Yemma.UsersTest do
         end)
 
       {:ok, token} = Base.url_decode64(token, padding: false)
-      assert user_token = Repo.get_by(UserToken, token: :crypto.hash(:sha256, token))
+      assert user_token = Repo.get_by(conf.token, token: :crypto.hash(:sha256, token))
       assert user_token.user_id == user.id
       assert user_token.sent_to == user.email
       assert user_token.context == "magic"
@@ -326,20 +334,20 @@ defmodule Yemma.UsersTest do
       assert confirmed_user.confirmed_at
       assert confirmed_user.confirmed_at != user.confirmed_at
       assert Repo.get!(conf.user, user.id).confirmed_at
-      refute Repo.get_by(UserToken, user_id: user.id)
+      refute Repo.get_by(conf.token, user_id: user.id)
     end
 
     test "does not confirm with invalid token", %{user: user, conf: conf} do
       assert Users.confirm_user(conf, "oops") == :error
       refute Repo.get!(conf.user, user.id).confirmed_at
-      assert Repo.get_by(UserToken, user_id: user.id)
+      assert Repo.get_by(conf.token, user_id: user.id)
     end
 
     test "does not confirm email if token expired", %{user: user, token: token, conf: conf} do
-      {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
+      {1, nil} = Repo.update_all(conf.token, set: [inserted_at: ~N[2020-01-01 00:00:00]])
       assert Users.confirm_user(conf, token) == :error
       refute Repo.get!(conf.user, user.id).confirmed_at
-      assert Repo.get_by(UserToken, user_id: user.id)
+      assert Repo.get_by(conf.token, user_id: user.id)
     end
   end
 end

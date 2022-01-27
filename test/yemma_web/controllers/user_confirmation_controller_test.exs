@@ -15,7 +15,7 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
       conn = get(conn, conf.routes.user_confirmation_path(conn, :edit, "garbage"))
       assert redirected_to(conn)
       refute get_session(conn, :user_token)
-      assert [] = Repo.all(Users.UserToken)
+      assert [] = Repo.all(conf.token)
     end
 
     test "confirms the given token once", %{conn: conn, user: %{id: user_id} = user, conf: conf} do
@@ -28,12 +28,12 @@ defmodule YemmaWeb.UserConfirmationControllerTest do
       assert redirected_to(conn)
       assert Yemma.get_user!(conf.name, user.id).confirmed_at
       assert get_session(conn, :user_token)
-      assert [%{context: "session", user_id: ^user_id} | []] = Repo.all(Users.UserToken)
+      assert [%{context: "session", user_id: ^user_id} | []] = Repo.all(conf.token)
 
       conn = get(conn, conf.routes.user_confirmation_path(conn, :edit, token))
       assert get_flash(conn, :error) =~ "Magic link is invalid or it has expired"
       assert redirected_to(conn) == conf.routes.user_session_path(conn, :new)
-      assert [%{context: "session", user_id: ^user_id} | []] = Repo.all(Users.UserToken)
+      assert [%{context: "session", user_id: ^user_id} | []] = Repo.all(conf.token)
     end
   end
 end

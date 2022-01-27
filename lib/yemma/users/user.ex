@@ -3,6 +3,8 @@ defmodule Yemma.Users.User do
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
+      use Ecto.Schema
+      @primary_key Keyword.get(opts, :primary_key, nil)
       schema "users" do
         field :email, :string
         field :confirmed_at, :naive_datetime
