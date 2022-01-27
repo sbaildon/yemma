@@ -297,6 +297,25 @@ defmodule Yemma.UsersTest do
     end
   end
 
+  describe "deliver_update_email_instructions/2" do
+    setup %{conf: conf} do
+      %{user: user_fixture(conf)}
+    end
+
+    test "sends token through notification", %{user: user, conf: conf} do
+      token =
+        extract_user_token(fn url ->
+          Users.deliver_update_email_instructions(conf, user, "new@example.com", url)
+        end)
+
+      {:ok, token} = Base.url_decode64(token, padding: false)
+      assert user_token = Repo.get_by(conf.token, token: :crypto.hash(:sha256, token))
+      assert user_token.user_id == user.id
+      assert user_token.sent_to == user.email
+      assert user_token.context == "change:new@example.com"
+    end
+  end
+
   describe "confirm_user/1" do
     setup %{conf: conf} do
       user = user_fixture(conf)
