@@ -183,6 +183,7 @@ defmodule YemmaWeb.UserAuth do
         |> URI.to_string()
 
       conn
+      |> renew_session()
       |> redirect(external: redirect_to)
       |> halt()
     end
