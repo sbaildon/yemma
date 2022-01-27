@@ -165,7 +165,7 @@ defmodule YemmaWeb.UserAuth do
       conn
     else
       redirect_to =
-        conf.routes.user_session_url(conn, :new)
+        conf.routes.user_session_url(conf.endpoint || conn, :new)
         |> URI.parse()
         |> Map.update!(:query, fn
           nil ->
