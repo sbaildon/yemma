@@ -164,7 +164,12 @@ defmodule Yemma.Users do
       UserToken.build_email_token(conf, user, "change:#{current_email}")
 
     conf.repo.insert!(user_token)
-    UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))
+
+    MailDispatcher.deliver_update_email_instructions(
+      conf,
+      user,
+      update_email_url_fun.(encoded_token)
+    )
   end
 
   ## Session

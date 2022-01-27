@@ -11,6 +11,12 @@ defmodule Yemma.Mail.NaiveDispatcher do
     |> deliver(conf)
   end
 
+  @impl MailDispatcher
+  def deliver_update_email_instructions(%Config{} = conf, recipient, link) do
+    MailBuilder.create_update_email_instructions(conf, recipient, link)
+    |> deliver(conf)
+  end
+
   defp deliver(email, conf) do
     with {:ok, _metadata} <- conf.mailer.deliver(email) do
       {:ok, email}
