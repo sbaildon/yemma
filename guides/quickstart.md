@@ -88,18 +88,18 @@
           redirect_if_user_is_authenticated: 2,
           require_authenticated_user: 2,
           fetch_current_user: 2,
-          put_conn_config: 2
+          prepare_yemma: 2
         ]
-        
+
       pipeline :browser do
         ...
         plug :fetch_current_user
       end
-        
+
       pipeline :yemma do
-        plug :put_conn_config
+        plug :prepare_yemma
       end
-    
+
       scope "/", YemmaWeb do
         pipe_through [:yemma, :browser, :redirect_if_user_is_authenticated]
 
@@ -108,7 +108,7 @@
 
         get "/confirm/:token", UserConfirmationController, :edit
       end
-    
+
       scope "/", YemmaWeb do
         pipe_through [:yemma, :browser, :require_authenticated_user]
 
@@ -118,10 +118,10 @@
 
         delete "/sign_out", UserSessionController, :delete
       end
-    
+
       # Protect routes with :require_authenticated_user
       scope "/protected", MyAppWeb do
-        pipe_through [:yemma, :browser, :require_authenticated_user]
+        pipe_through [:browser, :require_authenticated_user]
 
         get "/", MyProctedController, :index
       end

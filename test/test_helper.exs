@@ -56,7 +56,7 @@ defmodule Phoenix.YemmaTest.Router do
       redirect_if_user_is_authenticated: 2,
       require_authenticated_user: 2,
       fetch_current_user: 2,
-      put_conn_config: 2
+      prepare_yemma: 2
     ]
 
   pipeline :browser do
@@ -67,7 +67,7 @@ defmodule Phoenix.YemmaTest.Router do
   end
 
   pipeline :yemma do
-    plug :put_conn_config
+    plug :prepare_yemma
   end
 
   scope "/", Phoenix.YemmaTest do

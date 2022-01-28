@@ -305,7 +305,7 @@ defmodule YemmaWeb.UserAuthTest do
   describe "put_conn_config/2" do
     test "sets private", %{conn: conn} do
       conf = start_supervised_yemma!()
-      conn = conn |> Yemma.put_conn_config([])
+      conn = conn |> Yemma.prepare_yemma([])
 
       assert conn.private.yemma_routes == conf.routes
     end

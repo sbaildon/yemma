@@ -147,7 +147,7 @@ defmodule Yemma do
     name |> config() |> Users.confirm_user(token)
   end
 
-  def put_conn_config(conn, opts) do
+  def prepare_yemma(conn, opts) do
     conf =
       Keyword.get(opts, :name, __MODULE__)
       |> config()
