@@ -45,6 +45,7 @@ defmodule YemmaWeb.UserAuth do
   defp remember_me_options(conf, conn) do
     [sign: true, max_age: @max_age, same_site: "Lax", domain: cookie_domain(conf, conn)]
   end
+
   defp cookie_domain(conf, conn), do: conf.cookie_domain || conn.host()
 
   # This function renews the session ID and erases the whole
@@ -162,33 +163,33 @@ defmodule YemmaWeb.UserAuth do
   If you want to enforce the user email is confirmed before
   they use the application at all, here would be a good place.
   """
+  def require_authenticated_user(_conf, %{assigns: %{current_user: user}} = conn, _opts)
+      when not is_nil(user),
+      do: conn
+
   def require_authenticated_user(%Config{} = conf, conn, _opts) do
-    if conn.assigns[:current_user] do
-      conn
-    else
-      redirect_to =
-        conf.routes.user_session_url(conf.endpoint || conn, :new)
-        |> URI.parse()
-        |> Map.update!(:query, fn
-          nil ->
-            maybe_forward_return_to(conn)
-            |> case do
-              map when map == %{} -> nil
-              map -> URI.encode_query(map, :rfc3986)
-            end
+    redirect_to =
+      conf.routes.user_session_url(conf.endpoint || conn, :new)
+      |> URI.parse()
+      |> Map.update!(:query, fn
+        nil ->
+          maybe_forward_return_to(conn)
+          |> case do
+            map when map == %{} -> nil
+            map -> URI.encode_query(map, :rfc3986)
+          end
 
-          existing_query ->
-            URI.decode_query(existing_query, %{}, :rfc3986)
-            |> Map.merge(maybe_forward_return_to(conn))
-            |> URI.encode_query(:rfc3986)
-        end)
-        |> URI.to_string()
+        existing_query ->
+          URI.decode_query(existing_query, %{}, :rfc3986)
+          |> Map.merge(maybe_forward_return_to(conn))
+          |> URI.encode_query(:rfc3986)
+      end)
+      |> URI.to_string()
 
-      conn
-      |> renew_session()
-      |> redirect(external: redirect_to)
-      |> halt()
-    end
+    conn
+    |> renew_session()
+    |> redirect(external: redirect_to)
+    |> halt()
   end
 
   def put_private(%Config{} = conf, conn) do
