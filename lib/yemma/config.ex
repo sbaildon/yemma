@@ -7,12 +7,11 @@ defmodule Yemma.Config do
           secret_key_base: String.t(),
           repo: nil,
           name: term(),
-          mail_dispatcher: module(),
+          notifier: module(),
           mail_builder: module(),
           user: module(),
           token: module(),
-          endpoint: module(),
-          mailer: module()
+          endpoint: module()
         }
 
   @enforce_keys [:routes, :secret_key_base, :repo]
@@ -23,12 +22,11 @@ defmodule Yemma.Config do
             secret_key_base: nil,
             repo: nil,
             name: Yemma,
-            mail_dispatcher: Yemma.Mail.NaiveDispatcher,
+            notifier: {Yemma.Notifiers.NaiveMailer, mailer: Yemma.Mailer},
             mail_builder: Yemma.Mail.UnbrandedBuilder,
             user: nil,
             token: nil,
-            endpoint: nil,
-            mailer: Yemma.Mailer
+            endpoint: nil
 
   @spec new(Keyword.t()) :: t()
   def new(opts) when is_list(opts) do
@@ -63,21 +61,21 @@ defmodule Yemma.Config do
 
   defp validate_opt!({:name, _}), do: :ok
 
-  defp validate_opt!({:mail_dispatcher, {dispatcher, opts}}) do
+  defp validate_opt!({:notifier, {notifier, opts}}) do
     validate_opt!(
       :atom,
-      dispatcher,
-      ":mail_dispatcher must be an atom or {atom, list} tuple, eg. Yemma.Mail.NaiveDispatcher"
+      notifier,
+      ":notifier must be an atom or {atom, list} tuple, eg. Yemma.Notifiers.NaiveMailer"
     )
 
-    validate_opt!(:list, opts, ":mail_dispatcher opts must be a list")
+    validate_opt!(:list, opts, ":notifier opts must be a list")
   end
 
-  defp validate_opt!({:mail_dispatcher, mail_dispatcher}) do
+  defp validate_opt!({:notifier, notifier}) do
     validate_opt!(
       :atom,
-      mail_dispatcher,
-      ":mail_dispatcher must be an atom or {atom, list} tuple, eg. Yemma.Mail.NaiveDispatcher"
+      notifier,
+      ":notifier must be an atom or {atom, list} tuple, eg. Yemma.Notifiers.NaiveMailer"
     )
   end
 
@@ -99,10 +97,6 @@ defmodule Yemma.Config do
 
   defp validate_opt!({:endpoint, endpoint}) do
     validate_opt!(:atom, endpoint, ":endpoint must be an atom, eg. MyAppWeb.Endpoint")
-  end
-
-  defp validate_opt!({:mailer, mailer}) do
-    validate_opt!(:atom, mailer, ":mailer must be an atom, eg. MyAppMailer")
   end
 
   defp validate_opt!(:binary, opt, message) do

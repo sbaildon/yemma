@@ -1,9 +1,9 @@
-defmodule Yemma.ObanDispatcherTest do
+defmodule Yemma.Notifiers.ObanMailerTest do
   use Yemma.DataCase
 
   import Yemma.UsersFixtures
 
-  alias Yemma.Mail.Dispatcher
+  alias Yemma.Notifier
 
   @repo YemmaTest.Repo
   @name Oban
@@ -13,7 +13,10 @@ defmodule Yemma.ObanDispatcherTest do
   setup do
     start_supervised!({Oban, name: @name, repo: @repo, queues: [mailers: 10]})
 
-    conf = start_supervised_yemma!(mail_dispatcher: {Yemma.Mail.ObanDispatcher, oban: @name})
+    conf =
+      start_supervised_yemma!(
+        notifier: {Yemma.Notifiers.ObanMailer, oban: @name, mailer: Yemma.Mailer}
+      )
 
     %{conf: conf, user: user_fixture(conf)}
   end
@@ -22,13 +25,13 @@ defmodule Yemma.ObanDispatcherTest do
     test "enqueues a job", %{conf: conf, user: user} do
       token_link = "https://example.com"
 
-      {:ok, %{id: _id}} = Dispatcher.deliver_magic_link_instructions(conf, user, token_link)
+      {:ok, %{id: _id}} = Notifier.deliver_magic_link_instructions(conf, user, token_link)
 
       assert {:ok, _} =
                perform_job(
-                 Yemma.Mail.ObanDispatcher,
+                 Yemma.Notifiers.ObanMailer,
                  %{"user_id" => user.id, "magic_link" => token_link},
-                 meta: %{"yemma" => conf.name}
+                 meta: %{"yemma" => conf.name, "mailer" => Yemma.Mailer}
                )
     end
   end

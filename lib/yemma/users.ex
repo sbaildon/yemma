@@ -7,7 +7,7 @@ defmodule Yemma.Users do
 
   alias Yemma.Users.UserToken
   alias Yemma.Config
-  alias Yemma.Mail.Dispatcher, as: MailDispatcher
+  alias Yemma.Notifier
 
   ## Database getters
 
@@ -165,7 +165,7 @@ defmodule Yemma.Users do
 
     conf.repo.insert!(user_token)
 
-    MailDispatcher.deliver_update_email_instructions(
+    Notifier.deliver_update_email_instructions(
       conf,
       user,
       update_email_url_fun.(encoded_token)
@@ -212,7 +212,7 @@ defmodule Yemma.Users do
     {encoded_token, user_token} = UserToken.build_email_token(conf, user, "magic")
     conf.repo.insert!(user_token)
 
-    MailDispatcher.deliver_magic_link_instructions(
+    Notifier.deliver_magic_link_instructions(
       conf,
       user,
       confirmation_url_fun.(encoded_token)

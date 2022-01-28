@@ -1,4 +1,4 @@
-defmodule Yemma.Mail.Dispatcher do
+defmodule Yemma.Notifier do
   alias Yemma.Config
 
   @type conf :: Config.t()
@@ -12,18 +12,18 @@ defmodule Yemma.Mail.Dispatcher do
               {:ok, any()} | {:error, any()}
 
   def deliver_magic_link_instructions(%Config{} = conf, user, link) do
-    {dispatcher, opts} = dispatcher_and_opts(conf.mail_dispatcher)
-    dispatcher.deliver_magic_link_instructions(conf, user, link, opts)
+    {notifier, opts} = notifier_and_opts(conf.notifier)
+    notifier.deliver_magic_link_instructions(conf, user, link, opts)
   end
 
   def deliver_update_email_instructions(%Config{} = conf, user, link) do
-    {dispatcher, opts} = dispatcher_and_opts(conf.mail_dispatcher)
-    dispatcher.deliver_update_email_instructions(conf, user, link, opts)
+    {notifier, opts} = notifier_and_opts(conf.notifier)
+    notifier.deliver_update_email_instructions(conf, user, link, opts)
   end
 
-  defp dispatcher_and_opts(dispatcher) when is_atom(dispatcher),
-    do: {dispatcher, []}
+  defp notifier_and_opts(notifier) when is_atom(notifier),
+    do: {notifier, []}
 
-  defp dispatcher_and_opts({dispatcher, opts}),
-    do: {dispatcher, opts}
+  defp notifier_and_opts({notifier, opts}) when is_atom(notifier) and is_list(opts),
+    do: {notifier, opts}
 end
