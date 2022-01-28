@@ -1,5 +1,7 @@
 import Config
 
+config :yemma, ecto_repos: [YemmaTest.Repo]
+
 config :yemma, YemmaTest.Repo,
   priv: "test/support/",
   url: System.fetch_env!("DATABASE_URL"),

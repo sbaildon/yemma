@@ -1,19 +1,17 @@
 # Yemma
 
-To start your Phoenix server:
+Opinionated, passwordless authentication for Elixir projects
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+## Testing
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+1. Start a postgres database  
+`docker run --rm --name yemma_testing -e POSTGRES_PASSWORD=password -p 127.0.0.1:5432:5432 -d postgres`
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+1. Copy and optionally update `DATABASE_URL`  
+`cp env{.example,}`
 
-## Learn more
+1. Set up the database  
+`make test-setup`
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+1. Run tests  
+`make test`
