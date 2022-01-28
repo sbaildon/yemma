@@ -1,6 +1,8 @@
 defmodule Yemma.MixProject do
   use Mix.Project
 
+  @srht "https://git.sr.ht/~sbaildon/yemma"
+
   def project do
     [
       app: :yemma,
@@ -12,11 +14,22 @@ defmodule Yemma.MixProject do
       aliases: aliases(),
       deps: deps(),
       name: "Yemma",
-      source_url: "https://git.sr.ht/~sbaildon/yemma",
-      licenses: ["AGPL-3.0-only"],
+      source_url: @srht,
+      package: package(),
       decription: """
       Opinionated, passwordless authentication for Elixir projects
       """
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Sean Baildon"],
+      licenses: ["AGPL-3.0-only"],
+      links: %{
+        "GitHub" => "https://github.com/sbaildon/yemma",
+        "Source Hut" => @srht
+      }
     ]
   end
 
