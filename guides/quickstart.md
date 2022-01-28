@@ -2,7 +2,7 @@
 
 ## Installation
 
-1. Install as a dependency in your app<br>
+1. Install Yemma as a dependency in your app<br>
     ```elixir
     # mix.exs
     defp deps do
@@ -51,12 +51,16 @@
     ```
 
 1. Update your configuration<br>
+   You need to generate a secret key that is used to sign the authentication cookies
+   ```shell
+   mix phx.gen.secret
+   ```
     ```elixir
     # config/config.exs
     config :my_app, Yemma,
       repo: MyApp.Repo,
       routes: MyAppWeb.Router.Helpers,
-      secret_key_base: "Ai3Zg9yLIMInCtRd/8xyJEEVF/Tka5XR3etI6I0g3w5N72R5FEd1q+/xPZXS8HxC",
+      secret_key_base: $YOUR_SECRET_KEY,
       user: MyApp.User,
       token: MyApp.UserToken,
       endpoint: MyAppWeb.Endpoint,
@@ -81,10 +85,10 @@
     defmodule MyAppWeb.Router do
       import Yemma,
         only: [
-        redirect_if_user_is_authenticated: 2,
-        require_authenticated_user: 2,
-        fetch_current_user: 2,
-        put_conn_config: 2
+          redirect_if_user_is_authenticated: 2,
+          require_authenticated_user: 2,
+          fetch_current_user: 2,
+          put_conn_config: 2
         ]
         
       pipeline :browser do
