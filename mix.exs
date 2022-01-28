@@ -10,7 +10,13 @@ defmodule Yemma.MixProject do
       compilers: [:gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      name: "Yemma",
+      source_url: "https://git.sr.ht/~sbaildon/yemma",
+      licenses: ["AGPL-3.0-only"],
+      decription: """
+      Opinionated, passwordless authentication for Elixir projects
+      """
     ]
   end
 
