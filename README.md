@@ -4,7 +4,7 @@ Opinionated, passwordless authentication for Elixir projects
 
 ## Getting started
 
-See the [quickstart guide](guides/quicksstart.md)
+See the [quickstart guide](guides/quickstart.md)
 
 ## Testing
 
