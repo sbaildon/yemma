@@ -8,7 +8,6 @@ defmodule Yemma.Config do
           repo: nil,
           name: term(),
           notifier: module(),
-          mail_builder: module(),
           user: module(),
           token: module(),
           endpoint: module()
@@ -22,8 +21,9 @@ defmodule Yemma.Config do
             secret_key_base: nil,
             repo: nil,
             name: Yemma,
-            notifier: {Yemma.Notifiers.NaiveMailer, mailer: Yemma.Mailer},
-            mail_builder: Yemma.Mail.UnbrandedBuilder,
+            notifier:
+              {Yemma.Notifiers.NaiveMailer,
+               mailer: Yemma.Mailer, builder: Yemma.Mail.UnbrandedBuilder},
             user: nil,
             token: nil,
             endpoint: nil
@@ -76,14 +76,6 @@ defmodule Yemma.Config do
       :atom,
       notifier,
       ":notifier must be an atom or {atom, list} tuple, eg. Yemma.Notifiers.NaiveMailer"
-    )
-  end
-
-  defp validate_opt!({:mail_builder, mail_builder}) do
-    validate_opt!(
-      :atom,
-      mail_builder,
-      ":mail_builder must be an atom, eg. Yemma.Mail.UnbrandedBuilder"
     )
   end
 

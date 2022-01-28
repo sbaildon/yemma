@@ -8,7 +8,8 @@ defmodule Yemma.Notifiers.ObanMailer do
 
   @impl Notifier
   def deliver_magic_link_instructions(%Config{} = conf, recipient, link, opts) do
-    meta = meta(conf.name, opts[:mailer])
+    meta = meta(conf.name, opts[:mailer], opts[:builder])
+
     job =
       %{
         user_id: recipient.id,
@@ -21,7 +22,8 @@ defmodule Yemma.Notifiers.ObanMailer do
 
   @impl Notifier
   def deliver_update_email_instructions(%Config{} = conf, recipient, link, opts) do
-    meta = meta(conf.name, opts[:mailer])
+    meta = meta(conf.name, opts[:mailer], opts[:builder])
+
     job =
       %{
         user_id: recipient.id,
@@ -32,18 +34,18 @@ defmodule Yemma.Notifiers.ObanMailer do
     Oban.insert(opts[:oban], job)
   end
 
-  defp meta(yemma, mailer) do
-    %{yemma: yemma, mailer: mailer}
+  defp meta(yemma, mailer, builder) do
+    %{yemma: yemma, mailer: mailer, builder: builder}
   end
 
   @impl Oban.Worker
   def perform(%Job{
         args: %{"user_id" => user_id, "magic_link" => link},
-        meta: %{"yemma" => name, "mailer" => mailer}
+        meta: %{"yemma" => name, "mailer" => mailer, "builder" => builder}
       }) do
     with conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id) do
-      MailBuilder.create_magic_link_email(conf, user, link)
+      MailBuilder.create_magic_link_email(builder, user, link)
       |> deliver_with(mailer)
     end
   end
@@ -51,11 +53,11 @@ defmodule Yemma.Notifiers.ObanMailer do
   @impl Oban.Worker
   def perform(%Job{
         args: %{"user_id" => user_id, "update_email" => link},
-        meta: %{"yemma" => name, "mailer" => mailer}
+        meta: %{"yemma" => name, "mailer" => mailer, "builder" => builder}
       }) do
     with conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id) do
-      MailBuilder.create_update_email_instructions(conf, user, link)
+      MailBuilder.create_update_email_instructions(builder, user, link)
       |> deliver_with(mailer)
     end
   end

@@ -15,7 +15,7 @@ defmodule Yemma.Notifiers.ObanMailerTest do
 
     conf =
       start_supervised_yemma!(
-        notifier: {Yemma.Notifiers.ObanMailer, oban: @name, mailer: Yemma.Mailer}
+        notifier: {Yemma.Notifiers.ObanMailer, oban: @name, mailer: Yemma.Mailer, builder: Yemma.Mail.UnbrandedBuilder}
       )
 
     %{conf: conf, user: user_fixture(conf)}
@@ -31,7 +31,7 @@ defmodule Yemma.Notifiers.ObanMailerTest do
                perform_job(
                  Yemma.Notifiers.ObanMailer,
                  %{"user_id" => user.id, "magic_link" => token_link},
-                 meta: %{"yemma" => conf.name, "mailer" => Yemma.Mailer}
+                 meta: %{"yemma" => conf.name, "mailer" => Yemma.Mailer, "builder" => Yemma.Mail.UnbrandedBuilder}
                )
     end
   end

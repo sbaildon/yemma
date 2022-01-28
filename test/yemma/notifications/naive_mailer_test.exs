@@ -6,7 +6,13 @@ defmodule Yemma.Notifiers.NaiveMailerTest do
   alias Yemma.Notifier
 
   setup do
-    conf = yemma_config(notifier: {Yemma.Notifiers.NaiveMailer, mailer: Yemma.Mailer})
+    conf =
+      yemma_config(
+        notifier:
+          {Yemma.Notifiers.NaiveMailer,
+           mailer: Yemma.Mailer, builder: Yemma.Mail.UnbrandedBuilder}
+      )
+
     %{conf: conf, user: user_fixture(conf)}
   end
 
