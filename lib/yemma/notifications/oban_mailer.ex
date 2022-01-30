@@ -35,7 +35,7 @@ defmodule Yemma.Notifiers.ObanMailer do
   end
 
   defp meta(opts) do
-    %{yemma: Keyword.fetch!(opts, :yemma)}
+    %{yemma: Keyword.get(opts, :yemma, Yemma)}
   end
 
   @impl Oban.Worker
