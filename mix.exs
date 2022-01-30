@@ -16,6 +16,9 @@ defmodule Yemma.MixProject do
       name: "Yemma",
       source_url: @srht,
       package: package(),
+      elixirc_options: [
+        warnings_as_errors: true
+      ],
       decription: """
       Opinionated, passwordless authentication for Elixir projects
       """
