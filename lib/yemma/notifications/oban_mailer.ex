@@ -17,7 +17,7 @@ defmodule Yemma.Notifiers.ObanMailer do
       }
       |> Oban.Job.new(worker: __MODULE__, queue: :mailers, meta: meta)
 
-    Oban.insert(Keyword.fetch!(opts, :oban), job)
+    Oban.insert(oban(opts), job)
   end
 
   @impl Notifier
@@ -31,19 +31,30 @@ defmodule Yemma.Notifiers.ObanMailer do
       }
       |> Oban.Job.new(worker: __MODULE__, queue: :mailers, meta: meta)
 
-    Oban.insert(Keyword.fetch!(opts, :oban), job)
+    Oban.insert(oban(opts), job)
   end
 
   defp meta(opts) do
     %{yemma: Keyword.get(opts, :yemma, Yemma)}
   end
 
+  defp oban(opts) do
+    Keyword.get(opts, :oban, Oban)
+  end
+
+  def yemma_to_module(%{"yemma" => name}) when is_binary(name),
+    do: String.to_existing_atom(name)
+
+  def yemma_to_module(%{"yemma" => name}) when is_atom(name),
+    do: name
+
   @impl Oban.Worker
   def perform(%Job{
         args: %{"user_id" => user_id, "magic_link" => link},
-        meta: %{"yemma" => name}
+        meta: meta
       }) do
-    with conf <- Yemma.config(name),
+    with name <- yemma_to_module(meta),
+         conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id),
          {mailer, builder} <- mailer_and_builder(conf.notifier) do
       MailBuilder.create_magic_link_email(builder, user, link)
@@ -54,9 +65,10 @@ defmodule Yemma.Notifiers.ObanMailer do
   @impl Oban.Worker
   def perform(%Job{
         args: %{"user_id" => user_id, "update_email" => link},
-        meta: %{"yemma" => name}
+        meta: meta
       }) do
-    with conf <- Yemma.config(name),
+    with name <- yemma_to_module(meta),
+         conf <- Yemma.config(name),
          user <- Yemma.get_user!(conf.name, user_id),
          {mailer, builder} <- mailer_and_builder(conf.notifier) do
       MailBuilder.create_update_email_instructions(builder, user, link)
